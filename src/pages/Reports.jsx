@@ -1,7 +1,463 @@
+import { useEffect, useState } from "react";
+
+import Sidebar from "../components/Sidebar";
+
+import {
+  getPortfolioSummary,
+  getPortfolioHoldings,
+  getInvestments
+} from "../services/portfolioService";
+
+import {
+  getCurrentUser,
+  waitForAuth
+} from "../services/authService";
+
+import {
+  calculatePortfolioFDValue
+} from "../services/fdService";
+
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip
+} from "recharts";
 export default function Reports() {
+
+  const [summary, setSummary] =
+    useState(null);
+
+  const [holdings, setHoldings] =
+    useState([]);
+
+  const formatCurrency =
+  (amount) => {
+
+    return new Intl.NumberFormat(
+      "en-IN",
+      {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0
+      }
+    ).format(amount);
+  };
+  const [topFund, setTopFund] =
+    useState(null);
+
+  const [fdValue, setFdValue] =
+    useState(0);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  useEffect(() => {
+    loadReport();
+  }, []);
+
+  const loadReport =
+  async () => {
+
+    try {
+
+      let user =
+        getCurrentUser();
+
+      if (!user) {
+        user =
+          await waitForAuth();
+      }
+
+      if (!user) return;
+
+      const summaryData =
+        await getPortfolioSummary(
+          user.uid
+        );
+
+      const holdingsData =
+        await getPortfolioHoldings(
+          user.uid
+        );
+
+      const transactions =
+        await getInvestments(
+          user.uid
+        );
+
+      const fdAmount =
+        calculatePortfolioFDValue(
+          transactions,
+          Number(
+            localStorage.getItem(
+              "fdRate"
+            ) || 7
+          )
+        );
+
+      const sorted =
+        [...holdingsData]
+          .sort(
+            (a, b) =>
+              b.returnPercent -
+              a.returnPercent
+          );
+
+      setTopFund(
+        sorted[0]
+      );
+
+      setFdValue(
+        fdAmount
+      );
+
+      setSummary(
+        summaryData
+      );
+
+      setHoldings(
+        holdingsData
+      );
+
+      setLoading(
+        false
+      );
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+      setLoading(
+        false
+      );
+    }
+  };
+ const downloadPDF = () => {
+
+  const doc = new jsPDF();
+
+  doc.setFontSize(22);
+  doc.text(
+    "MF Portfolio Report",
+    14,
+    20
+  );
+
+  doc.setFontSize(11);
+
+  doc.text(
+    `Generated: ${new Date().toLocaleDateString()}`,
+    14,
+    30
+  );
+
+  autoTable(doc, {
+    startY: 40,
+    head: [["Metric", "Value"]],
+    body: [
+      [
+        "Total Invested",
+        `₹${formatCurrency(
+  summary.totalInvested
+)}`
+      ],
+      [
+        "Current Value",
+        `₹${formatCurrency(
+  summary.currentValue
+)}`
+      ],
+      [
+        "Profit / Loss",
+        `₹${formatCurrency(
+  summary.profitLoss
+)}`
+      ],
+      [
+        "Return %",
+        `${summary.returnPercent.toFixed(2)}%`
+      ]
+    ]
+  });
+
+  autoTable(doc, {
+    startY:
+      doc.lastAutoTable.finalY + 15,
+    head: [
+      [
+        "Fund",
+        "Invested",
+        "Current",
+        "Return %"
+      ]
+    ],
+    body: holdings.map(
+      fund => [
+        fund.fundName,
+        `₹${fund.invested.toFixed(0)}`,
+        `₹${fund.currentValue.toFixed(0)}`,
+        `${fund.returnPercent.toFixed(2)}%`
+      ]
+    )
+  });
+
+  autoTable(doc, {
+    startY:
+      doc.lastAutoTable.finalY + 15,
+    head: [["MF vs FD", "Value"]],
+    body: [
+      [
+        "Mutual Fund",
+        `₹${summary.currentValue.toFixed(0)}`
+      ],
+      [
+        "FD Value",
+        `₹${fdValue.toFixed(0)}`
+      ],
+      [
+        "Difference",
+        `₹${(
+          summary.currentValue -
+          fdValue
+        ).toFixed(0)}`
+      ]
+    ]
+  });
+
+  doc.save(
+    "portfolio-report.pdf"
+  );
+};
+  if (loading || !summary) {
+
   return (
-    <div className="text-white p-8">
-      <h1 className="text-3xl font-bold">Reports</h1>
+    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      Loading Report...
     </div>
   );
 }
+
+  return (
+  <div className="flex bg-slate-950 text-white min-h-screen">
+
+    <Sidebar />
+
+    <div
+  id="report-content"
+  style={{
+    background: "#020617",
+    color: "#ffffff",
+    padding: "20px"
+  }}
+>
+
+      <div className="flex justify-between items-center mb-8">
+
+        <h1 className="text-4xl font-bold">
+          Portfolio Report
+        </h1>
+
+        <button
+          onClick={downloadPDF}
+          className="bg-blue-600 px-5 py-3 rounded-lg font-semibold"
+        >
+          Download PDF
+        </button>
+
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+
+        <div className="bg-slate-900 p-6 rounded-xl">
+
+          <h2 className="text-2xl font-bold mb-5">
+            📈 Portfolio Performance
+          </h2>
+
+          <div className="space-y-4">
+
+<div className="bg-slate-800 p-4 rounded-lg">  Current Value
+  <br />
+  ₹{summary?.currentValue?.toFixed(0) || 0}
+</div>
+
+<div className="bg-slate-800 p-4 rounded-lg">  Total Invested
+  <br />
+  ₹{summary?.totalInvested?.toFixed(0) || 0}
+</div>
+
+            <div className="bg-slate-800 p-4 rounded-lg">
+              Profit / Loss
+              <br />
+              ₹{summary?.profitLoss?.toFixed(0) || 0}
+            </div>
+
+<div className="bg-slate-800 p-4 rounded-lg">              Return
+              <br />
+              {summary?.returnPercent?.toFixed(2) || 0}%
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className="bg-slate-900 p-6 rounded-xl">
+
+          <h2 className="text-2xl font-bold mb-5">
+            🥧 Asset Allocation
+          </h2>
+
+          <div
+  className="flex justify-center items-center"
+  style={{
+    height: "320px"
+  }}
+>
+
+  <PieChart
+    width={350}
+    height={300}
+  >
+
+                <Pie
+  data={[
+    {
+      name: "Equity",
+      value: summary?.equityValue || 0
+    },
+    {
+      name: "Debt",
+      value: summary?.debtValue || 0
+    },
+    {
+      name: "Liquid",
+      value: summary?.liquidValue || 0
+    }
+  ]}
+  dataKey="value"
+  cx="50%"
+  cy="50%"
+  innerRadius={60}
+  outerRadius={110}
+  paddingAngle={3}
+  label={({ name }) => name}
+>
+
+                  <Cell fill="#3B82F6" />
+                  <Cell fill="#F59E0B" />
+                  <Cell fill="#10B981" />
+
+                </Pie>
+
+                <Tooltip />
+
+              </PieChart>
+
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-3 gap-6 mt-6">
+
+        <div className="bg-slate-900 p-6 rounded-xl">
+
+          <h2 className="text-xl font-bold mb-4">
+            🏆 Top Performing Fund
+          </h2>
+
+          <p>
+            {topFund?.fundName || "No Fund"}
+          </p>
+
+          <p className="mt-3">
+            Invested:
+            ₹{topFund?.invested?.toFixed(0)}
+          </p>
+
+          <p>
+            Current:
+            ₹{topFund?.currentValue?.toFixed(0)}
+          </p>
+
+        </div>
+
+        <div className="bg-slate-900 p-6 rounded-xl">
+
+          <h2 className="text-xl font-bold mb-4">
+            🏦 MF vs FD
+          </h2>
+
+          <p>
+            Mutual Fund:
+            ₹{summary.currentValue.toFixed(0)}
+          </p>
+
+          <p>
+            FD Value:
+            ₹{fdValue.toFixed(0)}
+          </p>
+
+          <p className="mt-3">
+
+            Difference:
+
+            <span
+  className={
+    summary.currentValue >= fdValue
+      ? "text-green-400"
+      : "text-red-400"
+  }
+>
+  ₹{(
+    summary.currentValue -
+    fdValue
+  ).toFixed(0)}
+</span>
+
+          </p>
+
+        </div>
+
+        <div className="bg-slate-900 p-6 rounded-xl">
+
+          <h2 className="text-xl font-bold mb-4">
+            📊 Portfolio Health
+          </h2>
+
+          <p>
+            Funds Count:
+            {holdings.length}
+          </p>
+
+          <p>
+            Diversification:
+            {holdings.length >= 4
+              ? "Good"
+              : "Poor"}
+          </p>
+
+          <p>
+            Risk:
+            {summary.equityPercent >
+            80
+              ? "Moderate"
+              : "Low"}
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+);}

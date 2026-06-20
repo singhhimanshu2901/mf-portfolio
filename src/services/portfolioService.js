@@ -13,6 +13,7 @@ import {
 import { db } from "../firebase/firebase";
 import { getNav } from "./navService";
 
+// Save Investment
 export const saveInvestment = async (
   investmentData
 ) => {
@@ -30,6 +31,7 @@ export const saveInvestment = async (
   );
 };
 
+// Get Investments
 export const getInvestments = async (
   uid
 ) => {
@@ -47,6 +49,7 @@ export const getInvestments = async (
   }));
 };
 
+// Holdings
 export const getPortfolioHoldings =
   async (uid) => {
 
@@ -138,6 +141,7 @@ export const getPortfolioHoldings =
     );
   };
 
+// Update Summary
 export const updatePortfolioSummary =
   async (uid) => {
 
@@ -148,23 +152,15 @@ export const updatePortfolioSummary =
 
     const totalInvested =
       holdings.reduce(
-        (
-          sum,
-          item
-        ) =>
-          sum +
-          item.invested,
+        (sum, item) =>
+          sum + item.invested,
         0
       );
 
     const currentValue =
       holdings.reduce(
-        (
-          sum,
-          item
-        ) =>
-          sum +
-          item.currentValue,
+        (sum, item) =>
+          sum + item.currentValue,
         0
       );
 
@@ -180,6 +176,72 @@ export const updatePortfolioSummary =
           ) * 100
         : 0;
 
+    const equityValue =
+      holdings
+        .filter(item =>
+          item.category
+            ?.toLowerCase()
+            .includes("equity")
+        )
+        .reduce(
+          (sum, item) =>
+            sum +
+            item.currentValue,
+          0
+        );
+
+    const debtValue =
+      holdings
+        .filter(item =>
+          item.category
+            ?.toLowerCase()
+            .includes("debt")
+        )
+        .reduce(
+          (sum, item) =>
+            sum +
+            item.currentValue,
+          0
+        );
+
+    const liquidValue =
+      holdings
+        .filter(item =>
+          item.category
+            ?.toLowerCase()
+            .includes("liquid")
+        )
+        .reduce(
+          (sum, item) =>
+            sum +
+            item.currentValue,
+          0
+        );
+
+    const equityPercent =
+      currentValue > 0
+        ? (
+            equityValue /
+            currentValue
+          ) * 100
+        : 0;
+
+    const debtPercent =
+      currentValue > 0
+        ? (
+            debtValue /
+            currentValue
+          ) * 100
+        : 0;
+
+    const liquidPercent =
+      currentValue > 0
+        ? (
+            liquidValue /
+            currentValue
+          ) * 100
+        : 0;
+
     await setDoc(
       doc(
         db,
@@ -191,12 +253,22 @@ export const updatePortfolioSummary =
         currentValue,
         profitLoss,
         returnPercent,
+
+        equityValue,
+        debtValue,
+        liquidValue,
+
+        equityPercent,
+        debtPercent,
+        liquidPercent,
+
         updatedAt:
           Date.now()
       }
     );
   };
 
+// Get Summary
 export const getPortfolioSummary =
   async (uid) => {
 
@@ -223,6 +295,14 @@ export const getPortfolioSummary =
       totalInvested: 0,
       currentValue: 0,
       profitLoss: 0,
-      returnPercent: 0
+      returnPercent: 0,
+
+      equityValue: 0,
+      debtValue: 0,
+      liquidValue: 0,
+
+      equityPercent: 0,
+      debtPercent: 0,
+      liquidPercent: 0
     };
   };
