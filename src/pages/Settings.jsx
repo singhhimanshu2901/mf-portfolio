@@ -13,15 +13,30 @@ export default function Settings() {
 
   const saveSettings = () => {
 
-    localStorage.setItem(
-      "fdRate",
-      fdRate
-    );
+  const rate =
+    Number(fdRate);
+
+  if (
+    rate < 1 ||
+    rate > 15
+  ) {
 
     alert(
-      "Settings Saved Successfully"
+      "Please enter FD rate between 1% and 15%"
     );
-  };
+
+    return;
+  }
+
+  localStorage.setItem(
+    "fdRate",
+    rate
+  );
+
+  alert(
+    "Settings Saved Successfully"
+  );
+};
 
   return (
     <div className="flex bg-slate-950 text-white min-h-screen">
@@ -54,8 +69,14 @@ export default function Settings() {
                   e.target.value
                 )
               }
-              className="w-full bg-slate-800 p-3 rounded"
+              className="w-full bg-slate-800 p-3 rounded-lg border border-slate-700 focus:outline-none focus:border-blue-500"
             />
+            <p className="text-gray-400 mt-2">
+  Current FD Comparison Rate:
+  <span className="text-blue-400 font-semibold ml-2">
+    {fdRate}%
+  </span>
+</p>
 
           </div>
 
