@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import StatCard from "../components/StatCard";
 import PortfolioGrowthChart from "../components/PortfolioGrowthChart";
-
+import PortfolioVsNiftyChart from "../components/PortfolioVsNiftyChart";
 import TopHoldings
 from "../components/TopHoldings";
 
@@ -72,6 +72,80 @@ const [holdings, setHoldings] =
   const [chartData, setChartData] =
     useState([]);
 
+  const [chartMode, setChartMode] =
+  useState("growth");
+
+const [timeframe, setTimeframe] =
+  useState("30D");
+  const niftyData = [
+  {
+    month: "15 Feb",
+    portfolio: 100,
+    nifty: 100
+  },
+  {
+    month: "01 Mar",
+    portfolio: 104,
+    nifty: 102
+  },
+  {
+    month: "15 Mar",
+    portfolio: 108,
+    nifty: 105
+  },
+  {
+    month: "01 Apr",
+    portfolio: 112,
+    nifty: 108
+  },
+  {
+    month: "15 Apr",
+    portfolio: 118,
+    nifty: 111
+  },
+  {
+    month: "01 May",
+    portfolio: 122,
+    nifty: 113
+  },
+  {
+    month: "15 May",
+    portfolio: 126,
+    nifty: 115
+  },
+  {
+    month: "01 Jun",
+    portfolio: 130,
+    nifty: 118
+  }
+];
+const getFilteredNiftyData =
+  () => {
+
+    switch (
+      timeframe
+    ) {
+
+      case "1D":
+        return niftyData.slice(-2);
+
+      case "7D":
+        return niftyData.slice(-3);
+
+      case "30D":
+        return niftyData.slice(-4);
+
+      case "90D":
+        return niftyData.slice(-5);
+
+      case "180D":
+        return niftyData.slice(-6);
+
+      default:
+        return niftyData;
+    }
+
+  };
   useEffect(() => {
     loadDashboard();
   }, []);
@@ -101,7 +175,7 @@ const [holdings, setHoldings] =
             user.uid
           );
 
-        const portfolioHoldings =
+       const portfolioHoldings =
   await getPortfolioHoldings(
     user.uid
   );
@@ -137,58 +211,44 @@ if (
   );
 }
 
-  
+const sortedTransactions =
+  [...transactions]
+    .sort(
+      (a, b) =>
+        new Date(
+          a.date
+        ) -
+        new Date(
+          b.date
+        )
+    );
 
-        const monthlyData = {};
+let runningTotal = 0;
+const growthData =
+  sortedTransactions.map(
+    (txn, index) => {
 
-        transactions.forEach(
-          (txn) => {
-
-            const date =
-              new Date(
-                txn.date
-              );
-
-            const month =
-              date.toLocaleString(
-                "default",
-                {
-                  month: "short"
-                }
-              );
-
-            if (
-              !monthlyData[
-                month
-              ]
-            ) {
-              monthlyData[
-                month
-              ] = 0;
-            }
-
-            monthlyData[
-              month
-            ] += Number(
-              txn.amount
-            );
-          }
+      runningTotal +=
+        Number(
+          txn.amount
         );
 
-        const growthData =
-          Object.entries(
-            monthlyData
-          ).map(
-            ([month, value]) => ({
-              month,
-              value
-            })
-          );
+      return {
+  point: index + 1,
+  date: new Date(txn.date).toLocaleDateString("en-IN"),
+  value: runningTotal
+};
 
-        setChartData(
-          growthData
-        );
+    }
+  );
 
+console.log(
+  growthData
+);
+
+setChartData(
+  growthData
+);
         const fdAmount =
           calculatePortfolioFDValue(
             transactions,
@@ -364,12 +424,18 @@ if (
               Portfolio Allocation
             </h2>
 
-            <div className="h-[350px]">
+            <div
+  className="w-full"
+  style={{
+    height: "350px",
+    minHeight: "350px"
+  }}
+>
 
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
+  <ResponsiveContainer
+    width="99%"
+    height={350}
+  >
 
                 <PieChart>
 
@@ -400,10 +466,10 @@ if (
                   </Pie>
 
                   <Tooltip
-                    formatter={(value) =>
-                      `₹${Number(value).toFixed(0)}`
-                    }
-                  />
+  formatter={(value) =>
+    `₹${Number(value).toLocaleString("en-IN")}`
+  }
+/>
 
                 </PieChart>
 
@@ -477,10 +543,94 @@ if (
 
         <div className="mt-10">
 
-          <PortfolioGrowthChart
-            data={chartData}
-          />
-          
+          <div className="mb-6 flex gap-3">
+
+  <button
+    onClick={() =>
+      setChartMode(
+        "growth"
+      )
+    }
+    className={`px-4 py-2 rounded-lg ${
+      chartMode ===
+      "growth"
+        ? "bg-blue-600"
+        : "bg-slate-800"
+    }`}
+  >
+    📈 My Portfolio
+  </button>
+
+  <button
+    onClick={() =>
+      setChartMode(
+        "nifty"
+      )
+    }
+    className={`px-4 py-2 rounded-lg ${
+      chartMode ===
+      "nifty"
+        ? "bg-blue-600"
+        : "bg-slate-800"
+    }`}
+  >
+    
+    📊 Vs NIFTY
+  </button>
+
+</div>
+
+{
+  chartMode ===
+  "growth" ? (
+
+    <PortfolioGrowthChart
+      data={chartData}
+    />
+
+  ) : (
+
+   <PortfolioVsNiftyChart
+  data={getFilteredNiftyData()}
+  portfolioValue={summary.currentValue}
+  niftyValue={fdValue}
+  portfolioReturn={summary.returnPercent}
+/>
+
+  )
+}
+      <div className="flex justify-center mb-4">
+
+  <div className="bg-slate-800 p-1 rounded-xl flex flex-wrap gap-1">
+
+    {[
+      "1D",
+      "7D",
+      "30D",
+      "90D",
+      "180D",
+      "365D"
+    ].map((period) => (
+
+      <button
+        key={period}
+        onClick={() =>
+          setTimeframe(period)
+        }
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+          timeframe === period
+            ? "bg-blue-600 text-white shadow-md"
+            : "text-gray-300 hover:bg-slate-700"
+        }`}
+      >
+        {period}
+      </button>
+
+    ))}
+
+  </div>
+
+</div>
 <div className="mt-10 grid grid-cols-2 gap-6">
 
   <div className="bg-slate-900 rounded-xl p-6">
