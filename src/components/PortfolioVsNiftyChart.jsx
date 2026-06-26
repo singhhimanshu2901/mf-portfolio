@@ -17,16 +17,18 @@ export default function PortfolioVsNiftyChart({
 }) {
 
 
-  const niftyReturn =
-    data.length > 1
-      ? (
-          ((data[data.length - 1].nifty -
-            data[0].nifty) /
-            data[0].nifty) *
-          100
-        ).toFixed(2)
-      : 0;
-
+const niftyReturn =
+  data.length > 1
+    ? (
+        (
+          (
+            (niftyValue || data[data.length - 1].nifty) -
+            (data[0].nifty || niftyValue)
+          ) /
+          (data[0].nifty || niftyValue)
+        ) * 100
+      ).toFixed(2)
+    : 0;
   const difference =
     (
       Number(portfolioReturn) -
@@ -162,9 +164,9 @@ export default function PortfolioVsNiftyChart({
             />
 
             <XAxis
-              dataKey="month"
-              interval={0}
-            />
+  dataKey="month"
+  minTickGap={30}
+/>
 
             <YAxis />
 

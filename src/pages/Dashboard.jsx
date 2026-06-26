@@ -12,6 +12,11 @@ import {
   getInvestments,
   getPortfolioHoldings
 } from "../services/portfolioService";
+
+import {
+  getPortfolioHistory
+} from "../services/portfolioHistoryService";
+
 import {
   getCurrentUser,
   waitForAuth
@@ -36,6 +41,10 @@ import {
   ResponsiveContainer,
   Tooltip
 } from "recharts";
+
+import {
+  getNiftyData
+} from "../services/niftyService";
 
 export default function Dashboard() {
 
@@ -75,80 +84,20 @@ const [holdings, setHoldings] =
   const [chartMode, setChartMode] =
   useState("growth");
 
+  const [niftyData, setNiftyData] =
+  useState([]);
+
 const [timeframe, setTimeframe] =
-  useState("30D");
-  const niftyData = [
-  {
-    month: "15 Feb",
-    portfolio: 100,
-    nifty: 100
-  },
-  {
-    month: "01 Mar",
-    portfolio: 104,
-    nifty: 102
-  },
-  {
-    month: "15 Mar",
-    portfolio: 108,
-    nifty: 105
-  },
-  {
-    month: "01 Apr",
-    portfolio: 112,
-    nifty: 108
-  },
-  {
-    month: "15 Apr",
-    portfolio: 118,
-    nifty: 111
-  },
-  {
-    month: "01 May",
-    portfolio: 122,
-    nifty: 113
-  },
-  {
-    month: "15 May",
-    portfolio: 126,
-    nifty: 115
-  },
-  {
-    month: "01 Jun",
-    portfolio: 130,
-    nifty: 118
-  }
-];
-const getFilteredNiftyData =
-  () => {
+  useState("1M");
 
-    switch (
-      timeframe
-    ) {
+  const [
+  portfolioHistory,
+  setPortfolioHistory
+] = useState([]);
 
-      case "1D":
-        return niftyData.slice(-2);
-
-      case "7D":
-        return niftyData.slice(-3);
-
-      case "30D":
-        return niftyData.slice(-4);
-
-      case "90D":
-        return niftyData.slice(-5);
-
-      case "180D":
-        return niftyData.slice(-6);
-
-      default:
-        return niftyData;
-    }
-
-  };
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [timeframe]);
 
   const loadDashboard =
     async () => {
@@ -174,6 +123,15 @@ const getFilteredNiftyData =
           await getInvestments(
             user.uid
           );
+          const history =
+  await getPortfolioHistory(
+    user.uid,
+    timeframe
+  );
+
+setPortfolioHistory(
+  history
+);
 
        const portfolioHoldings =
   await getPortfolioHoldings(
@@ -210,109 +168,172 @@ if (
     ]
   );
 }
-
-const sortedTransactions =
-  [...transactions]
-    .sort(
-      (a, b) =>
-        new Date(
-          a.date
-        ) -
-        new Date(
-          b.date
-        )
-    );
-
-let runningTotal = 0;
 const growthData =
-  sortedTransactions.map(
-    (txn, index) => {
+  history.map(
+    (item, index) => ({
 
-      runningTotal +=
-        Number(
-          txn.amount
-        );
+      point: index + 1,
 
-      return {
-  point: index + 1,
-  date: new Date(txn.date).toLocaleDateString("en-IN"),
-  value: runningTotal
-};
+      date: new Date(
+        item.date
+      ).toLocaleDateString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "2-digit"
+        }
+      ),
 
-    }
+      value:
+        item.portfolio
+
+    })
   );
-
-console.log(
-  growthData
-);
 
 setChartData(
   growthData
 );
         const fdAmount =
-          calculatePortfolioFDValue(
-            transactions,
-            Number(
-              localStorage.getItem(
-                "fdRate"
-              ) || 7
-            )
-          );
+  calculatePortfolioFDValue(
+    transactions,
+    Number(
+      localStorage.getItem("fdRate") || 7
+    )
+  );
 
-        let oldestDate =
-          null;
+let oldestDate = null;
 
-        if (
-          transactions.length > 0
-        ) {
+if (transactions.length > 0) {
 
-          oldestDate =
-            transactions
-              .map(
-                item =>
-                  item.date
-              )
-              .sort()[0];
-        }
+  oldestDate =
+    transactions
+      .map(item => item.date)
+      .sort()[0];
 
-        const cagrValue =
-          calculateCAGR(
-            summaryData.totalInvested,
-            summaryData.currentValue,
-            oldestDate
-          );
+}
 
-        const xirrValue =
-          calculateXIRR(
-            summaryData.totalInvested,
-            summaryData.currentValue,
-            oldestDate
-          );
+const cagrValue =
+  calculateCAGR(
+    summaryData.totalInvested,
+    summaryData.currentValue,
+    oldestDate
+  );
 
-        setSummary(
-          summaryData
-        );
+const periodMap = {
+  "1D": "1d",
+  "1W": "1wk",
+  "1M": "1mo",
+  "6M": "6mo",
+  "1Y": "1y",
+  "ALL": "max"
+};
 
-        setFdValue(
-          fdAmount
-        );
+const nifty =
+  await getNiftyData(
+    periodMap[timeframe]
+  );
 
-        setMfVsFd(
-          summaryData.currentValue -
-          fdAmount
-        );
+const firstClose =
+  nifty[0]?.close || 1;
 
-        setCagr(
-          cagrValue
-        );
+const invested =
+  summaryData.totalInvested;
 
-        setXirr(
-          xirrValue
-        );
+const portfolioMap = {};
 
-        setLoading(
-          false
-        );
+history.forEach(item => {
+
+  portfolioMap[item.date] =
+    item.portfolio;
+
+});
+
+// Final NIFTY vs Portfolio Data
+const chartData =
+  nifty.map(item => {
+
+    const niftyValue =
+      invested *
+      (item.close / firstClose);
+
+    return {
+
+      month:
+        new Date(item.date)
+          .toLocaleDateString(
+            "en-IN",
+            {
+              day: "2-digit",
+              month: "short"
+            }
+          ),
+
+      date:
+        item.date,
+
+      actualNifty:
+        item.close,
+
+      nifty:
+        Number(
+          niftyValue.toFixed(2)
+        ),
+
+      portfolio:
+        portfolioMap[
+          item.date
+        ] ?? null
+
+    };
+
+  });
+
+setNiftyData(
+  chartData
+);
+
+const xirrValue =
+  calculateXIRR(
+    summaryData.totalInvested,
+    summaryData.currentValue,
+    oldestDate
+  );
+
+setSummary(
+  summaryData
+);
+
+setFdValue(
+  chartData.length
+    ? chartData[
+        chartData.length - 1
+      ].nifty
+    : invested
+);
+
+setMfVsFd(
+  summaryData.currentValue -
+  (
+    chartData.length
+      ? chartData[
+          chartData.length - 1
+        ].nifty
+      : invested
+  )
+);
+
+setCagr(
+  cagrValue
+);
+
+setXirr(
+  xirrValue
+);
+
+setLoading(
+  false
+);
 
       } catch (error) {
 
@@ -585,16 +606,34 @@ setChartData(
   "growth" ? (
 
     <PortfolioGrowthChart
-      data={chartData}
-    />
+  data={portfolioHistory}
+/>
 
   ) : (
 
    <PortfolioVsNiftyChart
-  data={getFilteredNiftyData()}
-  portfolioValue={summary.currentValue}
-  niftyValue={fdValue}
-  portfolioReturn={summary.returnPercent}
+  data={niftyData}
+  portfolioValue={
+    portfolioHistory.length
+      ? portfolioHistory[
+          portfolioHistory.length - 1
+        ].portfolio
+      : summary.currentValue
+  }
+  niftyValue={
+    niftyData.length
+      ? niftyData[
+          niftyData.length - 1
+        ].nifty
+      : 0
+  }
+  portfolioReturn={
+    portfolioHistory.length
+      ? portfolioHistory[
+          portfolioHistory.length - 1
+        ].returnPercent
+      : summary.returnPercent
+  }
 />
 
   )
@@ -605,11 +644,11 @@ setChartData(
 
     {[
       "1D",
-      "7D",
-      "30D",
-      "90D",
-      "180D",
-      "365D"
+      "1W",
+      "1M",
+      "6M",
+      "1Y",
+      "ALL"
     ].map((period) => (
 
       <button

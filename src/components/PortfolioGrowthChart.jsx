@@ -9,11 +9,12 @@ import {
 } from "recharts";
 
 export default function PortfolioGrowthChart({
-  data
+  data = []
 }) {
 
   return (
-    <div className="bg-slate-900 p-6 rounded-xl">
+
+    <div className="bg-slate-900 rounded-xl p-6">
 
       <h2 className="text-2xl font-bold mb-5">
         My Portfolio
@@ -28,15 +29,15 @@ export default function PortfolioGrowthChart({
       >
 
         <ResponsiveContainer
-          width="99%"
-          height={350}
+          width="100%"
+          height="100%"
         >
 
           <LineChart
             data={data}
             margin={{
               top: 10,
-              right: 30,
+              right: 20,
               left: 20,
               bottom: 10
             }}
@@ -44,16 +45,34 @@ export default function PortfolioGrowthChart({
 
             <CartesianGrid
               strokeDasharray="3 3"
+              stroke="#334155"
             />
 
             <XAxis
-              dataKey="point"
+              dataKey="date"
+              minTickGap={40}
+              tick={{
+                fill: "#CBD5E1",
+                fontSize: 11
+              }}
+              tickFormatter={(value) => {
+
+                const d =
+                  new Date(value);
+
+                return `${d.getDate()}/${d.getMonth() + 1}`;
+
+              }}
             />
 
             <YAxis
               width={80}
+              tick={{
+                fill: "#CBD5E1",
+                fontSize: 11
+              }}
               tickFormatter={(value) =>
-                `₹${Number(
+                `₹${Math.round(
                   value
                 ).toLocaleString(
                   "en-IN"
@@ -74,48 +93,110 @@ export default function PortfolioGrowthChart({
                 ) {
 
                   const item =
-                    payload[0];
+                    payload[0].payload;
 
                   return (
-                    <div className="bg-white text-black p-3 rounded-lg shadow-lg border">
 
-                      <p className="font-semibold mb-1">
-                        📅 {
-                          item.payload
-                            .date
-                        }
+                    <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-xl">
+
+                      <p className="text-gray-300 mb-2">
+
+                        {new Date(
+                          item.date
+                        ).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric"
+                          }
+                        )}
+
                       </p>
 
-                      <p className="text-blue-600 font-semibold">
+                      <p className="text-blue-400 text-sm">
                         Portfolio Value
                       </p>
 
-                      <p>
+                      <p className="text-white text-lg font-bold">
+
                         ₹{
                           Number(
-                            item.value
+                            item.portfolio
                           ).toLocaleString(
-                            "en-IN"
+                            "en-IN",
+                            {
+                              maximumFractionDigits: 2
+                            }
                           )
                         }
+
                       </p>
 
+                      <div className="mt-3 border-t border-slate-700 pt-2">
+
+                        <p className="text-gray-400 text-sm">
+                          Invested
+                        </p>
+
+                        <p className="text-white">
+
+                          ₹{
+                            Number(
+                              item.invested
+                            ).toLocaleString(
+                              "en-IN",
+                              {
+                                maximumFractionDigits: 2
+                              }
+                            )
+                          }
+
+                        </p>
+
+                      </div>
+
+                      <div className="mt-2">
+
+                        <p className="text-gray-400 text-sm">
+                          Return
+                        </p>
+
+                        <p
+                          className={`font-semibold ${
+                            item.returnPercent >= 0
+                              ? "text-green-400"
+                              : "text-red-400"
+                          }`}
+                        >
+
+                          {item.returnPercent}%
+
+                        </p>
+
+                      </div>
+
                     </div>
+
                   );
+
                 }
 
                 return null;
+
               }}
             />
 
             <Line
               type="monotone"
-              dataKey="value"
+              dataKey="portfolio"
+              connectNulls
               stroke="#3B82F6"
               strokeWidth={3}
               dot={false}
+              isAnimationActive={false}
               activeDot={{
-                r: 8
+                r: 7
               }}
             />
 
@@ -126,5 +207,7 @@ export default function PortfolioGrowthChart({
       </div>
 
     </div>
+
   );
+
 }
