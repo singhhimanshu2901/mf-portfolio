@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const API =
-  "http://localhost:5000/api/nifty";
+  import.meta.env.VITE_API_URL +
+  "/api/nifty";
 
 export const getNiftyData =
   async (period = "1mo") => {

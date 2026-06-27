@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const API =
-  "http://localhost:5000/api/nav-history";
+  import.meta.env.VITE_API_URL +
+  "/api/nav-history";
 
 const cache = {};
 
