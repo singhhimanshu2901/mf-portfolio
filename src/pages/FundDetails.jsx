@@ -1,38 +1,24 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar";
-// ADD IMPORT
-
-import TransactionAnalyticsTable
-from "../components/TransactionAnalyticsTable";
+import FundAnalytics from "../components/FundAnalytics";
+import FundNavChart from "../components/FundNavChart";
+import TransactionAnalyticsTable from "../components/TransactionAnalyticsTable";
 
 import {
   getHoldingBySchemeCode,
   getFundTransactions
 } from "../services/portfolioService";
-import FundNavChart from "../components/FundNavChart";
 
 import {
   getNavHistory
 } from "../services/navHistoryService";
 
 import {
-  getPortfolioHistory
-} from "../services/portfolioHistoryService";
-
-import {
   getCurrentUser,
   waitForAuth
 } from "../services/authService";
-
-import {
-  calculateCAGR
-} from "../utils/cagr";
-
-import {
-  calculateXIRR
-} from "../utils/xirr";
 
 export default function FundDetails() {
 
@@ -84,41 +70,39 @@ export default function FundDetails() {
 
         }
 
-        // With this
+        const [
 
-const [
+          holdingData,
 
-  holdingData,
+          transactionData,
 
-  transactionData,
+          historyData
 
-  historyData
+        ] = await Promise.all([
 
-] = await Promise.all([
+          getHoldingBySchemeCode(
 
-  getHoldingBySchemeCode(
+            user.uid,
 
-    user.uid,
+            schemeCode
 
-    schemeCode
+          ),
 
-  ),
+          getFundTransactions(
 
-  getFundTransactions(
+            user.uid,
 
-    user.uid,
+            schemeCode
 
-    schemeCode
+          ),
 
-  ),
+          getNavHistory(
 
-  getNavHistory(
+            schemeCode
 
-    schemeCode
+          )
 
-  )
-
-]);
+        ]);
 
         setHolding(
           holdingData
@@ -128,67 +112,66 @@ const [
           transactionData
         );
 
-       // With
+        const filteredHistory =
 
-const filteredHistory =
+          historyData.filter(item => {
 
-  historyData.filter(item => {
+            if (
 
-    if (
+              timeframe === "ALL"
 
-      timeframe === "ALL"
+            ) {
 
-    ) {
+              return true;
 
-      return true;
+            }
 
-    }
+            const today =
+              new Date();
 
-    const today =
-      new Date();
+            const date =
+              new Date(item.date);
 
-    const date =
-      new Date(item.date);
+            let days =
+              365;
 
-    let days = 365;
+            if (
+              timeframe === "1M"
+            ) {
 
-    if (
-      timeframe === "1M"
-    ) {
+              days = 30;
 
-      days = 30;
+            }
 
-    }
+            else if (
+              timeframe === "6M"
+            ) {
 
-    else if (
-      timeframe === "6M"
-    ) {
+              days = 180;
 
-      days = 180;
+            }
 
-    }
+            return (
 
-    return (
+              today - date <=
 
-      today - date <=
+              days *
 
-      days *
+              24 *
 
-      24 *
+              60 *
 
-      60 *
+              60 *
 
-      60 *
+              1000
 
-      1000
+            );
 
-    );
+          });
 
-  });
-
-setHistory(
-  filteredHistory
-);
+        setHistory(
+          filteredHistory
+        );
 
       }
 
@@ -212,105 +195,7 @@ setHistory(
 
   ]);
 
-  const analytics =
-    useMemo(() => {
-
-      if (
-
-        !holding ||
-
-        !transactions.length
-
-      ) {
-
-        return {
-
-          cagr: 0,
-
-          xirr: 0,
-
-          firstDate: null,
-
-          lastDate: null
-
-        };
-
-      }
-
-      const firstDate =
-
-        transactions[0].date;
-
-      const lastDate =
-
-        transactions[
-          transactions.length - 1
-        ].date;
-
-      return {
-
-        cagr:
-
-          calculateCAGR(
-
-            holding.invested,
-
-            holding.currentValue,
-
-            firstDate
-
-          ),
-
-        xirr:
-
-          calculateXIRR(
-
-            holding.invested,
-
-            holding.currentValue,
-
-            firstDate
-
-          ),
-
-        firstDate,
-
-        lastDate
-
-      };
-
-    }, [
-
-      holding,
-
-      transactions
-
-    ]);
-
-  const formatCurrency =
-    value =>
-
-      `₹${Number(
-
-        value || 0
-
-      ).toLocaleString(
-
-        "en-IN",
-
-        {
-
-          maximumFractionDigits: 0
-
-        }
-
-      )}`;
-
-  if (
-
-    loading
-
-  ) {
+  if (loading) {
 
     return (
 
@@ -324,11 +209,7 @@ setHistory(
 
   }
 
-  if (
-
-    !holding
-
-  ) {
+  if (!holding) {
 
     return (
 
@@ -348,6 +229,10 @@ setHistory(
       <Sidebar />
 
       <main className="flex-1 p-8">
+
+        {/* ============================ */}
+        {/* Header */}
+        {/* ============================ */}
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
 
@@ -396,7 +281,9 @@ setHistory(
                   onClick={() =>
 
                     setTimeframe(
+
                       period
+
                     )
 
                   }
@@ -421,190 +308,25 @@ setHistory(
 
         </div>
 
-        <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-5">
+        {/* ============================ */}
+        {/* Analytics */}
+        {/* ============================ */}
 
-          <div className="bg-slate-900 rounded-2xl p-6">
+        <FundAnalytics
 
-            <p className="text-slate-400">
+          holding={holding}
 
-              Invested
+          transactions={transactions}
 
-            </p>
+          history={history}
 
-            <h2 className="text-3xl font-bold mt-2">
+        />
 
-              {formatCurrency(
+        {/* ============================ */}
+        {/* NAV History */}
+        {/* ============================ */}
 
-                holding.invested
-
-              )}
-
-            </h2>
-
-          </div>
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-            <p className="text-slate-400">
-
-              Current Value
-
-            </p>
-
-            <h2 className="text-3xl font-bold mt-2">
-
-              {formatCurrency(
-
-                holding.currentValue
-
-              )}
-
-            </h2>
-
-          </div>
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-            <p className="text-slate-400">
-
-              Current NAV
-
-            </p>
-
-            <h2 className="text-3xl font-bold mt-2 text-cyan-400">
-
-              ₹
-
-              {holding.currentNav.toFixed(
-                2
-              )}
-
-            </h2>
-
-            <p className="text-xs text-slate-500 mt-2">
-
-              {holding.navDate}
-
-            </p>
-
-          </div>
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-            <p className="text-slate-400">
-
-              Profit / Loss
-
-            </p>
-
-            <h2
-
-              className={`text-3xl font-bold mt-2 ${
-                holding.profit >= 0
-                  ? "text-green-400"
-                  : "text-red-400"
-              }`}
-
-            >
-
-              {formatCurrency(
-
-                holding.profit
-
-              )}
-
-            </h2>
-
-            <p
-
-              className={`mt-2 ${
-                holding.returnPercent >= 0
-                  ? "text-green-400"
-                  : "text-red-400"
-              }`}
-
-            >
-
-              {holding.returnPercent}%
-
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-5 mt-6">
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-            <p className="text-slate-400">
-
-              Units
-
-            </p>
-
-            <h3 className="text-2xl font-bold mt-2">
-
-              {holding.units.toFixed(3)}
-
-            </h3>
-
-          </div>
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-            <p className="text-slate-400">
-
-              Average Buy NAV
-
-            </p>
-
-            <h3 className="text-2xl font-bold mt-2">
-
-              ₹
-
-              {holding.averageBuyNav.toFixed(
-                2
-              )}
-
-            </h3>
-
-          </div>
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-            <p className="text-slate-400">
-
-              First Investment
-
-            </p>
-
-            <h3 className="text-xl font-semibold mt-2">
-
-              {analytics.firstDate}
-
-            </h3>
-
-          </div>
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-            <p className="text-slate-400">
-
-              Transactions
-
-            </p>
-
-            <h3 className="text-2xl font-bold mt-2">
-
-              {transactions.length}
-
-            </h3>
-
-          </div>
-
-        </div>
-                <div className="bg-slate-900 rounded-2xl p-6 mt-8">
+        <div className="bg-slate-900 rounded-2xl p-6 mt-8">
 
           <div className="flex items-center justify-between mb-6">
 
@@ -624,105 +346,27 @@ setHistory(
 
           <FundNavChart
 
-  data={history}
+            data={history}
 
-/>
-
-
+          />
 
         </div>
 
-        <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-5 mt-8">
+        {/* ============================ */}
+        {/* Transaction Analytics */}
+        {/* ============================ */}
 
-          <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="mt-8">
 
-            <p className="text-slate-400">
+          <TransactionAnalyticsTable
 
-              CAGR
+            transactions={transactions}
 
-            </p>
+            currentNav={holding.currentNav}
 
-            <h2 className="text-3xl font-bold mt-2">
-
-              {analytics.cagr.toFixed(2)}%
-
-            </h2>
-
-          </div>
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-            <p className="text-slate-400">
-
-              XIRR
-
-            </p>
-
-            <h2 className="text-3xl font-bold mt-2">
-
-              {analytics.xirr.toFixed(2)}%
-
-            </h2>
-
-          </div>
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-  <p className="text-slate-400">
-
-    Return %
-
-  </p>
-
-  <h3
-
-    className={`text-2xl font-bold mt-2 ${
-      holding.returnPercent >= 0
-        ? "text-green-400"
-        : "text-red-400"
-    }`}
-
-  >
-
-    {holding.returnPercent.toFixed(2)}%
-
-  </h3>
-
-</div>
-
-          <div className="bg-slate-900 rounded-2xl p-6">
-
-            <p className="text-slate-400">
-
-              Last Investment
-
-            </p>
-
-            <h2 className="text-xl font-semibold mt-2">
-
-              {analytics.lastDate}
-
-            </h2>
-
-          </div>
+          />
 
         </div>
-
-
-
-
-
-<div className="mt-8">
-
-  <TransactionAnalyticsTable
-
-    transactions={transactions}
-
-    currentNav={holding.currentNav}
-
-  />
-
-</div>
 
       </main>
 

@@ -12,13 +12,120 @@ import {
 
 import { db } from "../firebase/firebase";
 import { getNav } from "./navService";
+import { calculateXIRR } from "../utils/xirr";
 
-// =======================================
+// ======================================
+// Helpers
+// ======================================
+
+const round = value =>
+
+  Number(
+
+    Number(
+      value || 0
+    ).toFixed(2)
+
+  );
+
+const calculateInvestmentAge = date => {
+
+  if (!date) {
+
+    return "--";
+
+  }
+
+  const start =
+    new Date(date);
+
+  const today =
+    new Date();
+
+  const totalMonths =
+
+    (
+
+      today.getFullYear() -
+
+      start.getFullYear()
+
+    ) * 12 +
+
+    (
+
+      today.getMonth() -
+
+      start.getMonth()
+
+    );
+
+  const years =
+    Math.floor(
+      totalMonths / 12
+    );
+
+  const months =
+    totalMonths % 12;
+
+  if (years <= 0) {
+
+    return `${months} Months`;
+
+  }
+
+  return `${years} Years ${months} Months`;
+
+};
+
+const createHolding =
+  transaction => ({
+
+    fundName:
+      transaction.fundName,
+
+    schemeCode:
+      transaction.schemeCode,
+
+    category:
+      transaction.category,
+
+    invested: 0,
+
+    units: 0,
+
+    averageBuyNav: 0,
+
+    currentNav: 0,
+
+    navDate: null,
+
+    currentValue: 0,
+
+    profit: 0,
+
+    returnPercent: 0,
+
+    xirr: 0,
+
+    firstInvestmentDate:
+      transaction.date,
+
+    lastInvestmentDate:
+      transaction.date,
+
+    investmentAge: "--",
+
+    transactionCount: 0
+
+  });
+
+// ======================================
 // Save Investment
-// =======================================
+// ======================================
 
 export const saveInvestment =
-  async (investmentData) => {
+  async investmentData => {
 
     await addDoc(
 
@@ -54,14 +161,13 @@ export const saveInvestment =
 
     );
 
-  };
-
-// =======================================
+};
+// ======================================
 // Get Investments
-// =======================================
+// ======================================
 
 export const getInvestments =
-  async (uid) => {
+  async uid => {
 
     const q =
       query(
@@ -92,13 +198,13 @@ export const getInvestments =
         ...doc.data(),
 
         amount:
-          Number(
-            doc.data().amount || 0
+          round(
+            doc.data().amount
           ),
 
         units:
-          Number(
-            doc.data().units || 0
+          round(
+            doc.data().units
           )
 
       }));
@@ -108,127 +214,40 @@ export const getInvestments =
       (a, b) =>
 
         new Date(a.date) -
+
         new Date(b.date)
 
     );
 
     return transactions;
 
-  };
+};
 
-// =======================================
-// Helpers
-// =======================================
-
-const round = value =>
-
-  Number(
-
-    Number(value || 0)
-
-      .toFixed(2)
-
-  );
-
-const createHolding =
-  transaction => ({
-
-    fundName:
-      transaction.fundName,
-
-    schemeCode:
-      transaction.schemeCode,
-
-    category:
-      transaction.category,
-
-    invested: 0,
-
-    units: 0,
-
-    totalPurchaseAmount: 0,
-
-    totalPurchaseUnits: 0,
-
-    averageBuyNav: 0,
-
-    currentNav: 0,
-
-    navDate: null,
-
-    currentValue: 0,
-
-    profit: 0,
-
-    returnPercent: 0,
-
-    absoluteReturn: 0,
-
-    transactionCount: 0,
-
-    firstInvestmentDate:
-      transaction.date,
-
-    lastInvestmentDate:
-      transaction.date
-
-  });
-
-const updateHolding =
-  (holding, transaction) => {
-
-    const amount =
-      Number(
-        transaction.amount || 0
-      );
-
-    const units =
-      Number(
-        transaction.units || 0
-      );
-
-    holding.transactionCount++;
-
-    holding.invested +=
-      amount;
-
-    holding.units +=
-      units;
-
-    holding.totalPurchaseAmount +=
-      amount;
-
-    holding.totalPurchaseUnits +=
-      units;
-
-    holding.lastInvestmentDate =
-      transaction.date;
-
-    return holding;
-
-  };
-  // =======================================
-// Portfolio Holdings Engine
-// =======================================
+// ======================================
+// Portfolio Holdings
+// ======================================
 
 export const getPortfolioHoldings =
-  async (uid) => {
+  async uid => {
 
     const transactions =
       await getInvestments(uid);
 
-    if (!transactions.length) {
+    if (
+
+      !transactions.length
+
+    ) {
 
       return [];
 
     }
 
-    const holdingsMap =
-      {};
+    const holdingsMap = {};
 
-    // ==========================
+    // ===============================
     // Merge Transactions
-    // ==========================
+    // ===============================
 
     for (const txn of transactions) {
 
@@ -238,23 +257,50 @@ export const getPortfolioHoldings =
         );
 
       if (
+
         !holdingsMap[key]
+
       ) {
 
         holdingsMap[key] =
+
           createHolding(
             txn
           );
 
       }
 
-      updateHolding(
+      const holding =
+        holdingsMap[key];
 
-        holdingsMap[key],
+      holding.transactionCount++;
 
-        txn
+      holding.invested +=
+        Number(
+          txn.amount
+        );
 
-      );
+      holding.units +=
+        Number(
+          txn.units
+        );
+
+      holding.lastInvestmentDate =
+        txn.date;
+
+      holding.averageBuyNav =
+
+        holding.units > 0
+
+          ? round(
+
+              holding.invested /
+
+              holding.units
+
+            )
+
+          : 0;
 
     }
 
@@ -263,9 +309,9 @@ export const getPortfolioHoldings =
         holdingsMap
       );
 
-    // ==========================
+    // ===============================
     // Fetch NAV Parallel
-    // ==========================
+    // ===============================
 
     const navResponses =
       await Promise.all(
@@ -275,31 +321,31 @@ export const getPortfolioHoldings =
           holding =>
 
             getNav(
-
               holding.schemeCode
-
             )
 
         )
 
       );
-
-    // ==========================
-    // Final Calculation
-    // ==========================
+          // ===============================
+    // Final Calculations
+    // ===============================
 
     return holdings.map(
 
       (
+
         holding,
+
         index
+
       ) => {
 
         const navData =
 
-          navResponses[
-            index
-          ] || {};
+          navResponses[index] ||
+
+          {};
 
         const currentNav =
           round(
@@ -317,22 +363,6 @@ export const getPortfolioHoldings =
 
           );
 
-        const averageBuyNav =
-
-          holding.totalPurchaseUnits >
-
-          0
-
-            ? round(
-
-                holding.totalPurchaseAmount /
-
-                holding.totalPurchaseUnits
-
-              )
-
-            : 0;
-
         const profit =
           round(
 
@@ -344,26 +374,38 @@ export const getPortfolioHoldings =
 
         const returnPercent =
 
-          holding.invested >
-
-          0
+          holding.invested > 0
 
             ? round(
 
                 (
+
                   profit /
 
                   holding.invested
+
                 ) * 100
 
               )
 
             : 0;
 
-        const absoluteReturn =
+        const xirr =
+          calculateXIRR(
 
-          round(
-            profit
+            holding.invested,
+
+            currentValue,
+
+            holding.firstInvestmentDate
+
+          );
+
+        const investmentAge =
+          calculateInvestmentAge(
+
+            holding.firstInvestmentDate
+
           );
 
         return {
@@ -380,7 +422,10 @@ export const getPortfolioHoldings =
               holding.units
             ),
 
-          averageBuyNav,
+          averageBuyNav:
+            round(
+              holding.averageBuyNav
+            ),
 
           currentNav,
 
@@ -394,9 +439,25 @@ export const getPortfolioHoldings =
 
           profit,
 
-          absoluteReturn,
+          returnPercent,
 
-          returnPercent
+          xirr,
+
+          investmentAge,
+
+          wealthMultiplier:
+
+            holding.invested > 0
+
+              ? round(
+
+                  currentValue /
+
+                  holding.invested
+
+                )
+
+              : 0
 
         };
 
@@ -404,13 +465,91 @@ export const getPortfolioHoldings =
 
     );
 
-  };
-  // =======================================
+};
+
+// ======================================
+// Get Single Holding
+// ======================================
+
+export const getHoldingBySchemeCode =
+  async (
+
+    uid,
+
+    schemeCode
+
+  ) => {
+
+    const holdings =
+      await getPortfolioHoldings(
+        uid
+      );
+
+    return (
+
+      holdings.find(
+
+        item =>
+
+          String(
+
+            item.schemeCode
+
+          ) ===
+
+          String(
+
+            schemeCode
+
+          )
+
+      ) ||
+
+      null
+
+    );
+
+};
+
+// ======================================
+// Get Fund Transactions
+// ======================================
+
+export const getFundTransactions =
+  async (
+
+    uid,
+
+    schemeCode
+
+  ) => {
+
+    const transactions =
+      await getInvestments(
+        uid
+      );
+
+    return transactions.filter(
+
+      txn =>
+
+        String(
+          txn.schemeCode
+        ) ===
+
+        String(
+          schemeCode
+        )
+
+    );
+
+};
+// ======================================
 // Update Portfolio Summary
-// =======================================
+// ======================================
 
 export const updatePortfolioSummary =
-  async (uid) => {
+  async uid => {
 
     const holdings =
       await getPortfolioHoldings(
@@ -462,12 +601,7 @@ export const updatePortfolioSummary =
 
     }
 
-    // ==========================
-    // Totals
-    // ==========================
-
     const totalInvested =
-
       round(
 
         holdings.reduce(
@@ -485,7 +619,6 @@ export const updatePortfolioSummary =
       );
 
     const currentValue =
-
       round(
 
         holdings.reduce(
@@ -503,7 +636,6 @@ export const updatePortfolioSummary =
       );
 
     const profitLoss =
-
       round(
 
         currentValue -
@@ -530,12 +662,7 @@ export const updatePortfolioSummary =
 
         : 0;
 
-    // ==========================
-    // Allocation
-    // ==========================
-
     const equityValue =
-
       round(
 
         holdings
@@ -565,7 +692,6 @@ export const updatePortfolioSummary =
       );
 
     const debtValue =
-
       round(
 
         holdings
@@ -595,7 +721,6 @@ export const updatePortfolioSummary =
       );
 
     const liquidValue =
-
       round(
 
         holdings
@@ -678,10 +803,6 @@ export const updatePortfolioSummary =
 
         : 0;
 
-    // ==========================
-    // Save Summary
-    // ==========================
-
     await setDoc(
 
       doc(
@@ -717,39 +838,43 @@ export const updatePortfolioSummary =
         liquidPercent,
 
         fundCount:
-
           holdings.length,
 
         updatedAt:
-
           Date.now()
 
       }
 
     );
 
-  };
-  // =======================================
+};
+
+// ======================================
 // Get Portfolio Summary
-// =======================================
+// ======================================
 
 export const getPortfolioSummary =
-  async (uid) => {
-
-    const summaryRef =
-      doc(
-        db,
-        "portfolio_summary",
-        uid
-      );
+  async uid => {
 
     const snapshot =
       await getDoc(
-        summaryRef
+
+        doc(
+
+          db,
+
+          "portfolio_summary",
+
+          uid
+
+        )
+
       );
 
     if (
+
       snapshot.exists()
+
     ) {
 
       return snapshot.data();
@@ -784,78 +909,14 @@ export const getPortfolioSummary =
 
     };
 
-  };
+};
 
-// =======================================
-// Get Single Holding
-// =======================================
-
-export const getHoldingBySchemeCode =
-  async (
-    uid,
-    schemeCode
-  ) => {
-
-    const holdings =
-      await getPortfolioHoldings(
-        uid
-      );
-
-    return (
-
-      holdings.find(
-
-        item =>
-
-          String(
-            item.schemeCode
-          ) ===
-          String(
-            schemeCode
-          )
-
-      ) || null
-
-    );
-
-  };
-
-// =======================================
-// Get Transactions By Scheme
-// =======================================
-
-export const getFundTransactions =
-  async (
-    uid,
-    schemeCode
-  ) => {
-
-    const transactions =
-      await getInvestments(
-        uid
-      );
-
-    return transactions.filter(
-
-      txn =>
-
-        String(
-          txn.schemeCode
-        ) ===
-        String(
-          schemeCode
-        )
-
-    );
-
-  };
-
-// =======================================
-// Portfolio Statistics
-// =======================================
+// ======================================
+// Portfolio Stats
+// ======================================
 
 export const getPortfolioStats =
-  async (uid) => {
+  async uid => {
 
     const holdings =
       await getPortfolioHoldings(
@@ -863,7 +924,9 @@ export const getPortfolioStats =
       );
 
     if (
+
       !holdings.length
+
     ) {
 
       return {
@@ -879,7 +942,6 @@ export const getPortfolioStats =
     }
 
     const sorted =
-
       [...holdings].sort(
 
         (a, b) =>
@@ -905,13 +967,14 @@ export const getPortfolioStats =
 
     };
 
-  };
-  // =======================================
+};
+
+// ======================================
 // Refresh Portfolio
-// =======================================
+// ======================================
 
 export const refreshPortfolio =
-  async (uid) => {
+  async uid => {
 
     await updatePortfolioSummary(
       uid
@@ -921,116 +984,11 @@ export const refreshPortfolio =
       uid
     );
 
-  };
+};
 
-// =======================================
-// Utility Functions
-// =======================================
-
-export const formatHolding =
-  holding => ({
-
-    ...holding,
-
-    invested:
-      round(
-        holding.invested
-      ),
-
-    units:
-      round(
-        holding.units
-      ),
-
-    averageBuyNav:
-      round(
-        holding.averageBuyNav
-      ),
-
-    currentNav:
-      round(
-        holding.currentNav
-      ),
-
-    currentValue:
-      round(
-        holding.currentValue
-      ),
-
-    profit:
-      round(
-        holding.profit
-      ),
-
-    absoluteReturn:
-      round(
-        holding.absoluteReturn
-      ),
-
-    returnPercent:
-      round(
-        holding.returnPercent
-      )
-
-  });
-
-// =======================================
-// Category Summary
-// =======================================
-
-export const getCategorySummary =
-  async (uid) => {
-
-    const holdings =
-      await getPortfolioHoldings(
-        uid
-      );
-
-    return {
-
-      equity:
-
-        holdings.filter(item =>
-
-          item.category
-
-            ?.toLowerCase()
-
-            .includes("equity")
-
-        ),
-
-      debt:
-
-        holdings.filter(item =>
-
-          item.category
-
-            ?.toLowerCase()
-
-            .includes("debt")
-
-        ),
-
-      liquid:
-
-        holdings.filter(item =>
-
-          item.category
-
-            ?.toLowerCase()
-
-            .includes("liquid")
-
-        )
-
-    };
-
-  };
-
-// =======================================
+// ======================================
 // Export
-// =======================================
+// ======================================
 
 export default {
 
@@ -1040,17 +998,15 @@ export default {
 
   getPortfolioHoldings,
 
-  updatePortfolioSummary,
-
-  getPortfolioSummary,
-
   getHoldingBySchemeCode,
 
   getFundTransactions,
 
-  getPortfolioStats,
+  updatePortfolioSummary,
 
-  getCategorySummary,
+  getPortfolioSummary,
+
+  getPortfolioStats,
 
   refreshPortfolio
 
