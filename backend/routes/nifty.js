@@ -16,6 +16,41 @@ const niftyCache =
 const pendingRequests =
   new Map();
 
+// ===============================
+// Cache Cleanup
+// ===============================
+
+setInterval(() => {
+
+  const now =
+    Date.now();
+
+  for (const [
+
+    key,
+
+    value
+
+  ] of niftyCache.entries()) {
+
+    if (
+
+      now -
+
+      value.timestamp >
+
+      CACHE_DURATION
+
+    ) {
+
+      niftyCache.delete(key);
+
+    }
+
+  }
+
+}, 5 * 60 * 1000);
+
 router.get("/", async (req, res) => {
 
   try {

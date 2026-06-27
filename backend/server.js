@@ -6,8 +6,9 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import morgan from "morgan";
 
-import niftyRoutes from "./routes/nifty.js";
+import navRoutes from "./routes/nav.js";
 import navHistoryRoutes from "./routes/navHistory.js";
+import niftyRoutes from "./routes/nifty.js";
 
 dotenv.config();
 
@@ -36,6 +37,33 @@ app.use(compression());
 app.use(morgan("combined"));
 
 // ======================================
+// CORS
+// ======================================
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://mf-portfolio-2901.vercel.app"
+    ],
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "OPTIONS"
+    ],
+    credentials: true
+  })
+);
+
+// ======================================
+// Body Parser
+// ======================================
+
+app.use(express.json());
+
+// ======================================
 // Rate Limiter
 // ======================================
 
@@ -62,35 +90,6 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // ======================================
-// CORS
-// ======================================
-
-app.use(cors({
-
-  origin: [
-
-    "http://localhost:5173",
-
-    "https://mf-portfolio-2901.vercel.app"
-
-  ],
-
-  methods: [
-
-    "GET",
-    "POST"
-
-  ]
-
-}));
-
-// ======================================
-// Body Parser
-// ======================================
-
-app.use(express.json());
-
-// ======================================
 // Health Check
 // ======================================
 
@@ -110,17 +109,22 @@ app.get("/", (req, res) => {
 });
 
 // ======================================
-// Routes
+// API Routes
 // ======================================
 
 app.use(
-  "/api/nifty",
-  niftyRoutes
+  "/api/nav",
+  navRoutes
 );
 
 app.use(
   "/api/nav-history",
   navHistoryRoutes
+);
+
+app.use(
+  "/api/nifty",
+  niftyRoutes
 );
 
 // ======================================

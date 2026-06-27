@@ -1,16 +1,13 @@
-// backend/routes/navHistory.js
-
 import express from "express";
-import axios from "axios";
 
 const router = express.Router();
 
 // ===============================
-// Memory Cache
+// Cache
 // ===============================
 
 const CACHE_DURATION =
-  24 * 60 * 60 * 1000; // 24 Hours
+  24 * 60 * 60 * 1000;
 
 const navCache =
   new Map();
@@ -19,7 +16,42 @@ const pendingRequests =
   new Map();
 
 // ===============================
-// Route
+// Cleanup
+// ===============================
+
+setInterval(() => {
+
+  const now =
+    Date.now();
+
+  for (const [
+
+    key,
+
+    value
+
+  ] of navCache.entries()) {
+
+    if (
+
+      now -
+
+      value.timestamp >
+
+      CACHE_DURATION
+
+    ) {
+
+      navCache.delete(key);
+
+    }
+
+  }
+
+}, 60 * 60 * 1000);
+
+// ===============================
+// NAV History
 // ===============================
 
 router.get(
@@ -28,15 +60,18 @@ router.get(
 
     try {
 
-      const { schemeCode } =
-        req.params;
+      const {
+
+        schemeCode
+
+      } = req.params;
 
       const now =
         Date.now();
 
-      // ===========================
-      // Cache Hit
-      // ===========================
+      // =====================
+      // Cache
+      // =====================
 
       const cached =
         navCache.get(
@@ -44,9 +79,15 @@ router.get(
         );
 
       if (
+
         cached &&
-        now - cached.timestamp <
+
+        now -
+
+          cached.timestamp <
+
           CACHE_DURATION
+
       ) {
 
         return res.json(
@@ -55,111 +96,159 @@ router.get(
 
       }
 
-      // ===========================
-      // Prevent Duplicate Requests
-      // ===========================
+      // =====================
+      // Duplicate Requests
+      // =====================
 
       if (
+
         pendingRequests.has(
           schemeCode
         )
+
       ) {
 
         const data =
+
           await pendingRequests.get(
             schemeCode
           );
 
-        return res.json(data);
+        return res.json(
+          data
+        );
 
       }
 
-      // ===========================
-      // Fetch Function
-      // ===========================
+      // =====================
+      // Fetch
+      // =====================
 
       const fetchPromise =
-        axios
+        (async () => {
 
-          .get(
-            `https://api.mfapi.in/mf/${schemeCode}`,
+          const response =
+            await fetch(
+
+              `https://api.mfapi.in/mf/${schemeCode}`
+
+            );
+
+          if (
+
+            !response.ok
+
+          ) {
+
+            throw new Error(
+
+              `HTTP ${response.status}`
+
+            );
+
+          }
+
+          const json =
+            await response.json();
+
+          if (
+
+            !json ||
+
+            !Array.isArray(
+              json.data
+            )
+
+          ) {
+
+            throw new Error(
+              "Invalid NAV response"
+            );
+
+          }
+
+          const history =
+
+            json.data
+
+              .map(item => ({
+
+                date:
+
+                  item.date
+
+                    .split("-")
+
+                    .reverse()
+
+                    .join("-"),
+
+                nav:
+
+                  Number(
+                    item.nav
+                  )
+
+              }))
+
+              .reverse();
+
+          navCache.set(
+
+            schemeCode,
+
             {
-              timeout: 10000
+
+              data:
+                history,
+
+              timestamp:
+                Date.now()
+
             }
-          )
 
-          .then(response => {
+          );
 
-            const history =
-              response.data.data
+          return history;
 
-                .map(item => ({
+        })()
 
-                  date:
-                    item.date
+        .finally(() => {
 
-                      .split("-")
+          pendingRequests.delete(
+            schemeCode
+          );
 
-                      .reverse()
-
-                      .join("-"),
-
-                  nav:
-                    Number(
-                      item.nav
-                    )
-
-                }))
-
-                .reverse();
-
-            navCache.set(
-              schemeCode,
-              {
-
-                data:
-                  history,
-
-                timestamp:
-                  Date.now()
-
-              }
-            );
-
-            return history;
-
-          })
-
-          .finally(() => {
-
-            pendingRequests.delete(
-              schemeCode
-            );
-
-          });
+        });
 
       pendingRequests.set(
+
         schemeCode,
+
         fetchPromise
+
       );
 
       const history =
         await fetchPromise;
 
-      res.json(
+      return res.json(
         history
       );
 
     }
 
-    catch (error) {
+    catch (err) {
 
       console.error(
-        "NAV API Error:",
-        error.message
+
+        "NAV History Error:",
+
+        err.message
+
       );
 
-      res.status(500).json({
+      return res.status(500).json({
 
         error:
           "Unable to fetch NAV history"
@@ -169,6 +258,7 @@ router.get(
     }
 
   }
+
 );
 
 export default router;

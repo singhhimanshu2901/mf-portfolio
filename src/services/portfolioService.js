@@ -50,6 +50,7 @@ export const getInvestments = async (
 };
 
 // Holdings
+// Holdings
 export const getPortfolioHoldings =
   async (uid) => {
 
@@ -58,7 +59,11 @@ export const getPortfolioHoldings =
 
     const holdings = {};
 
-    for (const txn of transactions) {
+    // ============================
+    // Merge Transactions
+    // ============================
+
+    transactions.forEach(txn => {
 
       const key =
         txn.schemeCode;
@@ -66,6 +71,7 @@ export const getPortfolioHoldings =
       if (!holdings[key]) {
 
         holdings[key] = {
+
           fundName:
             txn.fundName,
 
@@ -76,8 +82,11 @@ export const getPortfolioHoldings =
             txn.category,
 
           invested: 0,
+
           units: 0
+
         };
+
       }
 
       holdings[key].invested +=
@@ -89,58 +98,140 @@ export const getPortfolioHoldings =
         Number(
           txn.units || 0
         );
-    }
+
+    });
 
     const holdingArray =
       Object.values(
         holdings
       );
 
-    return await Promise.all(
+    // ============================
+    // Fetch Latest NAV Parallel
+    // ============================
 
-      holdingArray.map(
-        async (
-          holding
-        ) => {
+    const navResponses =
+      await Promise.all(
 
-          const navData =
-            await getNav(
+        holdingArray.map(
+          holding =>
+
+            getNav(
               holding.schemeCode
-            );
+            )
+        )
 
-          const currentNav =
-            Number(
-              navData.nav || 0
-            );
+      );
 
-          const currentValue =
-            holding.units *
-            currentNav;
+    // ============================
+    // Final Holdings
+    // ============================
 
-          const profit =
-            currentValue -
-            holding.invested;
+    return holdingArray.map(
 
-          const returnPercent =
-            holding.invested > 0
-              ? (
-                  profit /
-                  holding.invested
-                ) * 100
-              : 0;
+      (
+        holding,
+        index
+      ) => {
 
-          return {
-            ...holding,
-            currentNav,
-            currentValue,
-            profit,
-            returnPercent
-          };
-        }
-      )
+        const currentNav =
+          Number(
+
+            navResponses[
+              index
+            ]?.nav || 0
+
+          );
+
+        const invested =
+          Number(
+            holding.invested
+          );
+
+        const units =
+          Number(
+            holding.units
+          );
+
+        const currentValue =
+          Number(
+            (
+              units *
+              currentNav
+            ).toFixed(2)
+          );
+
+        const profit =
+          Number(
+            (
+              currentValue -
+              invested
+            ).toFixed(2)
+          );
+
+        const returnPercent =
+          invested > 0
+
+            ? Number(
+
+                (
+                  (
+                    profit /
+                    invested
+                  ) * 100
+                ).toFixed(2)
+
+              )
+
+            : 0;
+
+        const averageBuyNav =
+
+          units > 0
+
+            ? Number(
+
+                (
+                  invested /
+                  units
+                ).toFixed(2)
+
+              )
+
+            : 0;
+
+        return {
+
+          ...holding,
+
+          invested,
+
+          units,
+
+          averageBuyNav,
+
+          currentNav,
+
+          navDate:
+            navResponses[
+              index
+            ]?.date ||
+
+            null,
+
+          currentValue,
+
+          profit,
+
+          returnPercent
+
+        };
+
+      }
+
     );
-  };
 
+  };
 // Update Summary
 export const updatePortfolioSummary =
   async (uid) => {

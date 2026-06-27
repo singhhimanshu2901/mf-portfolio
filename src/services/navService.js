@@ -1,79 +1,136 @@
-import {
-  doc,
-  getDoc,
-  setDoc
-} from "firebase/firestore";
+import axios from "axios";
 
-import { db } from "../firebase/firebase";
+const API =
+  import.meta.env.VITE_API_URL +
+  "/api/nav";
 
-export const loadFunds = async () => {
-  const response = await fetch("/funds.json");
-  return await response.json();
-};
+const navCache = new Map();
+
+const pendingRequests = new Map();
 
 const CACHE_DURATION =
-  1000 * 60 * 60 * 12; // 12 Hours
+  5 * 60 * 1000;
 
-export const getNav = async (schemeCode) => {
+// Cleanup
+setInterval(() => {
 
-  try {
+  const now =
+    Date.now();
 
-    const cacheRef = doc(
-      db,
-      "nav_cache",
-      String(schemeCode)
-    );
+  for (const [
 
-    const cacheSnap =
-      await getDoc(cacheRef);
+    key,
 
-    if (cacheSnap.exists()) {
+    value
 
-      const cacheData =
-        cacheSnap.data();
+  ] of navCache.entries()) {
 
-      const age =
-        Date.now() -
-        cacheData.updatedAt;
+    if (
 
-      if (age < CACHE_DURATION) {
+      now -
 
-        return {
-          nav: cacheData.nav
-        };
-      }
+      value.timestamp >
+
+      CACHE_DURATION
+
+    ) {
+
+      navCache.delete(key);
+
     }
 
-    const response = await fetch(
-      `https://api.mfapi.in/mf/${schemeCode}`
-    );
-
-    const data =
-      await response.json();
-
-    const latestNav =
-      parseFloat(
-        data.data[0].nav
-      );
-
-    await setDoc(
-      cacheRef,
-      {
-        nav: latestNav,
-        updatedAt: Date.now()
-      }
-    );
-
-    return {
-      nav: latestNav
-    };
-
-  } catch (error) {
-
-    console.error(error);
-
-    return {
-      nav: 0
-    };
   }
+
+}, 5 * 60 * 1000);
+export const loadFunds = async () => {
+
+  const response =
+    await fetch(
+      "/funds.json"
+    );
+
+  return await response.json();
+
+};
+export const getNav = async (
+  schemeCode
+) => {
+
+  const now =
+    Date.now();
+
+  const cached =
+    navCache.get(
+      schemeCode
+    );
+
+  if (
+
+    cached &&
+
+    now -
+      cached.timestamp <
+      CACHE_DURATION
+
+  ) {
+
+    return cached.data;
+
+  }
+
+  if (
+
+    pendingRequests.has(
+      schemeCode
+    )
+
+  ) {
+
+    return await pendingRequests.get(
+      schemeCode
+    );
+
+  }
+
+  const fetchPromise =
+    axios
+
+      .get(
+        `${API}/${schemeCode}`
+      )
+
+      .then(response => {
+
+        navCache.set(
+          schemeCode,
+          {
+
+            data:
+              response.data,
+
+            timestamp:
+              Date.now()
+
+          }
+        );
+
+        return response.data;
+
+      })
+
+      .finally(() => {
+
+        pendingRequests.delete(
+          schemeCode
+        );
+
+      });
+
+  pendingRequests.set(
+    schemeCode,
+    fetchPromise
+  );
+
+  return await fetchPromise;
+
 };
