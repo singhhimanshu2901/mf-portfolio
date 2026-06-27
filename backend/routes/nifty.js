@@ -3,12 +3,68 @@ import axios from "axios";
 
 const router = express.Router();
 
+// ==================================
+// Memory Cache
+// ==================================
+
+const CACHE_DURATION =
+  5 * 60 * 1000; // 5 Minutes
+
+const niftyCache =
+  new Map();
+
+const pendingRequests =
+  new Map();
+
 router.get("/", async (req, res) => {
 
   try {
 
     const period =
       req.query.period || "1mo";
+
+    const now =
+      Date.now();
+
+    // =============================
+    // Cache Hit
+    // =============================
+
+    const cached =
+      niftyCache.get(period);
+
+    if (
+      cached &&
+      now - cached.timestamp <
+        CACHE_DURATION
+    ) {
+
+      return res.json(
+        cached.data
+      );
+
+    }
+
+    // =============================
+    // Duplicate Requests
+    // =============================
+
+    if (
+      pendingRequests.has(period)
+    ) {
+
+      const data =
+        await pendingRequests.get(
+          period
+        );
+
+      return res.json(data);
+
+    }
+
+    // =============================
+    // Config
+    // =============================
 
     const config = {
 
@@ -48,61 +104,105 @@ router.get("/", async (req, res) => {
       config[period] ||
       config["1mo"];
 
-    const url =
-      `https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?range=${selected.range}&interval=${selected.interval}`;
+    // =============================
+    // Fetch Function
+    // =============================
 
-    console.log(url);
+    const fetchPromise =
+      axios
 
-    const response =
-      await axios.get(url);
-
-    const result =
-      response.data.chart.result[0];
-
-    const timestamps =
-      result.timestamp;
-
-    const closes =
-      result.indicators.quote[0].close;
-
-    let lastClose = 0;
-
-    const data =
-      timestamps
-        .map(
-          (time, index) => {
-
-            if (
-              closes[index] != null
-            ) {
-
-              lastClose =
-                closes[index];
-
-            }
-
-            return {
-
-              date:
-                new Date(
-                  time * 1000
-                )
-                  .toISOString()
-                  .split("T")[0],
-
-              close:
-                Number(
-                  lastClose.toFixed(2)
-                )
-
-            };
-
+        .get(
+          `https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?range=${selected.range}&interval=${selected.interval}`,
+          {
+            timeout: 10000
           }
         )
-        .filter(
-          item =>
-            item.close > 0
-        );
+
+        .then(response => {
+
+          const result =
+            response.data.chart.result[0];
+
+          const timestamps =
+            result.timestamp;
+
+          const closes =
+            result.indicators.quote[0].close;
+
+          let lastClose = 0;
+
+          const data =
+            timestamps
+
+              .map(
+                (time, index) => {
+
+                  if (
+                    closes[index] != null
+                  ) {
+
+                    lastClose =
+                      closes[index];
+
+                  }
+
+                  return {
+
+                    date:
+                      new Date(
+                        time * 1000
+                      )
+                        .toISOString()
+                        .split("T")[0],
+
+                    close:
+                      Number(
+                        lastClose.toFixed(
+                          2
+                        )
+                      )
+
+                  };
+
+                }
+              )
+
+              .filter(
+                item =>
+                  item.close > 0
+              );
+
+          niftyCache.set(
+            period,
+            {
+
+              data,
+
+              timestamp:
+                Date.now()
+
+            }
+          );
+
+          return data;
+
+        })
+
+        .finally(() => {
+
+          pendingRequests.delete(
+            period
+          );
+
+        });
+
+    pendingRequests.set(
+      period,
+      fetchPromise
+    );
+
+    const data =
+      await fetchPromise;
 
     res.json(data);
 
@@ -111,7 +211,7 @@ router.get("/", async (req, res) => {
   catch (err) {
 
     console.error(
-      err.response?.data ||
+      "NIFTY API Error:",
       err.message
     );
 
