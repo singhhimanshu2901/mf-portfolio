@@ -1,78 +1,87 @@
 import { useEffect, useState } from "react";
-
+import html2canvas from "html2canvas";
+import { imageToBase64 } from "../utils/imageToBase64";
 import Sidebar from "../components/Sidebar";
+import ReportCharts from "../components/reports/ReportCharts";
 
+const logo = "/logo.png";
 import {
-
   getPortfolioSummary,
-
   getPortfolioHoldings,
-
   getInvestments
-
 } from "../services/portfolioService";
 
 import {
-
   getCurrentUser,
-
   waitForAuth
-
 } from "../services/authService";
 
 import {
-
   calculatePortfolioFDValue
-
 } from "../services/fdService";
 
 import {
+  getPortfolioHistory
+} from "../services/portfolioHistoryService";
 
+import {
   generatePortfolioPDF
-
-} from "../utils/reportGenerator";
+} from "../utils/report/reportGenerator";
 
 export default function Reports() {
 
+  // ==============================
+  // Portfolio Data
+  // ==============================
+
+  const [summary, setSummary] =
+    useState(null);
+
+  const [holdings, setHoldings] =
+    useState([]);
+
+  const [transactions, setTransactions] =
+    useState([]);
+
+  const [history, setHistory] =
+    useState([]);
+
+  const [fdValue, setFdValue] =
+    useState(0);
+
+  // ==============================
+  // UI State
+  // ==============================
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [generating, setGenerating] =
+    useState(false);
+
+  // ==============================
+  // Chart Images
+  // ==============================
+
   const [
 
-    summary,
+    growthChartImage,
 
-    setSummary
+    setGrowthChartImage
 
   ] = useState(null);
 
   const [
 
-    holdings,
+    allocationChartImage,
 
-    setHoldings
+    setAllocationChartImage
 
-  ] = useState([]);
+  ] = useState(null);
 
-  const [
-
-    transactions,
-
-    setTransactions
-
-  ] = useState([]);
-
-  const [
-
-    fdValue,
-
-    setFdValue
-
-  ] = useState(0);
-
-  const [
-
-    loading,
-
-    setLoading
-
-  ] = useState(true);
+  // ==============================
+  // Initial Load
+  // ==============================
 
   useEffect(() => {
 
@@ -80,25 +89,35 @@ export default function Reports() {
 
   }, []);
 
+    // ==============================
+  // Load Portfolio Report
+  // ==============================
+
   const loadReport = async () => {
 
     try {
 
       setLoading(true);
 
-      let user =
-
-        getCurrentUser();
+      let user = getCurrentUser();
 
       if (!user) {
 
-        user =
-
-          await waitForAuth();
+        user = await waitForAuth();
 
       }
 
-      if (!user) return;
+      if (!user) {
+
+        setLoading(false);
+
+        return;
+
+      }
+
+      // ==============================
+      // Load Everything Together
+      // ==============================
 
       const [
 
@@ -106,7 +125,9 @@ export default function Reports() {
 
         holdingsData,
 
-        transactionData
+        transactionData,
+
+        portfolioHistory
 
       ] = await Promise.all([
 
@@ -126,9 +147,45 @@ export default function Reports() {
 
           user.uid
 
+        ),
+
+        getPortfolioHistory(
+
+          user.uid
+
         )
 
       ]);
+
+      // ==============================
+      // Sort Holdings
+      // ==============================
+
+      const sortedHoldings =
+
+        [...holdingsData].sort(
+
+          (a, b) =>
+
+            b.currentValue -
+
+            a.currentValue
+
+        );
+
+      // ==============================
+      // FD Comparison
+      // ==============================
+
+      const fdRate = Number(
+
+        localStorage.getItem(
+
+          "fdRate"
+
+        ) || 7
+
+      );
 
       const fdAmount =
 
@@ -136,17 +193,13 @@ export default function Reports() {
 
           transactionData,
 
-          Number(
-
-            localStorage.getItem(
-
-              "fdRate"
-
-            ) || 7
-
-          )
+          fdRate
 
         );
+
+      // ==============================
+      // Update State
+      // ==============================
 
       setSummary(
 
@@ -156,15 +209,7 @@ export default function Reports() {
 
       setHoldings(
 
-        holdingsData.sort(
-
-          (a, b) =>
-
-            b.returnPercent -
-
-            a.returnPercent
-
-        )
+        sortedHoldings
 
       );
 
@@ -174,9 +219,27 @@ export default function Reports() {
 
       );
 
+      setHistory(
+
+        portfolioHistory
+
+      );
+
       setFdValue(
 
         fdAmount
+
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(
+
+        "Reports Error:",
+
+        error
 
       );
 
@@ -189,19 +252,218 @@ export default function Reports() {
     }
 
   };
-    if (
+    // ==============================
+  // Generate Portfolio PDF
+  // ==============================
 
-    loading ||
+  const handleGeneratePDF = async () => {
 
-    !summary
+    try {
 
-  ) {
+      setGenerating(true);
+
+      // Wait for hidden charts to render
+
+      await new Promise(
+
+        resolve =>
+
+          setTimeout(
+
+            resolve,
+
+            400
+
+          )
+
+      );
+
+      // ==============================
+      // Growth Chart
+      // ==============================
+const logoBase64 =
+await imageToBase64(logo);
+
+      const growthElement =
+
+        document.getElementById(
+
+          "portfolio-growth-chart"
+
+        );
+
+      let growthImage = null;
+
+      if (
+
+        growthElement
+
+      ) {
+
+        const canvas =
+
+          await html2canvas(
+
+            growthElement,
+
+            {
+
+              scale: 3,
+
+              backgroundColor:
+
+                "#ffffff",
+
+              useCORS: true
+
+            }
+
+          );
+
+        growthImage =
+
+          canvas.toDataURL(
+
+            "image/png"
+
+          );
+
+        setGrowthChartImage(
+
+          growthImage
+
+        );
+
+      }
+
+      // ==============================
+      // Allocation Chart
+      // ==============================
+
+      const allocationElement =
+
+        document.getElementById(
+
+          "allocation-chart"
+
+        );
+
+      let allocationImage = null;
+
+      if (
+
+        allocationElement
+
+      ) {
+
+        const canvas =
+
+          await html2canvas(
+
+            allocationElement,
+
+            {
+
+              scale: 3,
+
+              backgroundColor:
+
+                "#ffffff",
+
+              useCORS: true
+
+            }
+
+          );
+
+        allocationImage =
+
+          canvas.toDataURL(
+
+            "image/png"
+
+          );
+
+        setAllocationChartImage(
+
+          allocationImage
+
+        );
+
+      }
+
+      // ==============================
+      // Generate PDF
+      // ==============================
+
+      await generatePortfolioPDF({
+
+  logo: logoBase64,
+
+  summary,
+
+  holdings,
+
+  transactions,
+
+  history,
+
+  fdValue,
+
+  growthChartImage: growthImage,
+
+  allocationChartImage: allocationImage
+
+});
+
+    }
+
+    catch (error) {
+
+      console.error(
+
+        "PDF Generation Error:",
+
+        error
+
+      );
+
+      alert(
+
+        "Failed to generate report."
+
+      );
+
+    }
+
+    finally {
+
+      setGenerating(false);
+
+    }
+
+  };
+    // ==============================
+  // Loading
+  // ==============================
+
+  if (loading || !summary) {
 
     return (
 
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white text-2xl">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
 
-        Loading Reports...
+        <div className="text-center">
+
+          <div className="w-14 h-14 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+
+          <p className="text-slate-300 mt-5 text-lg">
+
+            Loading Portfolio Reports...
+
+          </p>
+
+        </div>
 
       </div>
 
@@ -209,13 +471,19 @@ export default function Reports() {
 
   }
 
+  // ==============================
+  // UI
+  // ==============================
+
   return (
 
     <div className="flex min-h-screen bg-slate-950 text-white">
 
       <Sidebar />
 
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8 overflow-y-auto">
+
+        {/* Header */}
 
         <div className="mb-10">
 
@@ -225,19 +493,21 @@ export default function Reports() {
 
           </h1>
 
-          <p className="text-slate-400 mt-3">
+          <p className="text-slate-400 mt-2">
 
-            Generate professional PDF reports for your mutual fund portfolio.
+            Download beautiful professional portfolio reports.
 
           </p>
 
         </div>
 
+        {/* Cards */}
+
         <div className="grid lg:grid-cols-2 gap-8">
 
-          {/* Portfolio Report */}
+          {/* Portfolio */}
 
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8">
+          <div className="rounded-2xl bg-slate-900 border border-slate-800 p-8">
 
             <div className="text-5xl">
 
@@ -251,23 +521,25 @@ export default function Reports() {
 
             </h2>
 
-            <p className="text-slate-400 mt-4 leading-7">
+            <p className="mt-4 text-slate-400 leading-7">
 
-              Generate a professional PDF report containing portfolio summary,
+              Complete PDF report including Executive Summary,
 
-              holdings analysis, MF vs FD comparison, portfolio health,
+              Portfolio Growth, Asset Allocation,
 
-              automatic insights and complete performance statistics.
+              Holdings, MF vs FD Comparison,
+
+              Portfolio Health & Smart Insights.
 
             </p>
 
-            <div className="mt-8 space-y-4">
+            <div className="space-y-4 mt-8">
 
               <div className="flex justify-between">
 
                 <span>Total Funds</span>
 
-                <span className="font-semibold">
+                <span>
 
                   {holdings.length}
 
@@ -279,7 +551,7 @@ export default function Reports() {
 
                 <span>Total Invested</span>
 
-                <span className="font-semibold">
+                <span>
 
                   ₹{summary.totalInvested.toLocaleString("en-IN")}
 
@@ -291,7 +563,7 @@ export default function Reports() {
 
                 <span>Current Value</span>
 
-                <span className="font-semibold text-green-400">
+                <span className="text-green-400">
 
                   ₹{summary.currentValue.toLocaleString("en-IN")}
 
@@ -301,15 +573,19 @@ export default function Reports() {
 
               <div className="flex justify-between">
 
-                <span>Return</span>
+                <span>Total Return</span>
 
                 <span
 
-                  className={`font-semibold ${
+                  className={
+
                     summary.returnPercent >= 0
+
                       ? "text-green-400"
+
                       : "text-red-400"
-                  }`}
+
+                  }
 
                 >
 
@@ -323,35 +599,31 @@ export default function Reports() {
 
             <button
 
-              onClick={() =>
+              onClick={handleGeneratePDF}
 
-                generatePortfolioPDF({
+              disabled={generating}
 
-                  summary,
-
-                  holdings,
-
-                  transactions,
-
-                  fdValue
-
-                })
-
-              }
-
-              className="w-full mt-10 bg-blue-600 hover:bg-blue-700 transition-all rounded-xl py-4 font-bold text-lg"
+              className="mt-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 py-4 font-bold transition"
 
             >
 
-              Generate Portfolio PDF
+              {
+
+                generating
+
+                  ? "Generating Report..."
+
+                  : "Generate Portfolio PDF"
+
+              }
 
             </button>
 
           </div>
 
-          {/* Fund Report */}
+          {/* Fund */}
 
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8">
+          <div className="rounded-2xl bg-slate-900 border border-slate-800 p-8">
 
             <div className="text-5xl">
 
@@ -367,9 +639,17 @@ export default function Reports() {
 
             <p className="text-slate-400 mt-4 leading-7">
 
-              Generate detailed PDF reports for individual mutual funds including
-              NAV history, transaction summary, XIRR, wealth multiplier,
-              performance analytics and historical growth.
+              Generate detailed reports for every mutual fund.
+
+              Includes NAV history, investment analytics,
+
+              XIRR, Wealth Multiplier,
+
+              Transactions,
+
+              Performance Statistics
+
+              and Growth Analysis.
 
             </p>
 
@@ -377,7 +657,7 @@ export default function Reports() {
 
               <div className="text-4xl">
 
-                🚧
+                🚀
 
               </div>
 
@@ -387,15 +667,45 @@ export default function Reports() {
 
               </h3>
 
-              <p className="text-slate-400 mt-3">
+              <p className="text-slate-400 mt-2">
 
-                This feature will be available in the next update.
+                Available in next update.
 
               </p>
 
             </div>
 
           </div>
+
+        </div>
+
+        {/* Hidden Charts */}
+
+        <div
+
+          className="fixed"
+
+          style={{
+
+            left: "-10000px",
+
+            top: 0,
+
+            width: 900,
+
+            opacity: 1
+
+          }}
+
+        >
+
+          <ReportCharts
+
+            history={history}
+
+            summary={summary}
+
+          />
 
         </div>
 
