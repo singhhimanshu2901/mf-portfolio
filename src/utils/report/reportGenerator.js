@@ -7,193 +7,51 @@ import { holdingsPage } from "./holdingsPage";
 import { analysisPage } from "./analysisPage";
 import { insightsPage } from "./insightsPage";
 import { footer } from "./footer";
+import { calculateCAGR } from "../cagr";
+import { calculateXIRR } from "../xirr";
 
 // ======================================
 // Helpers
 // ======================================
 
-const calculatePortfolioScore = (
-
-  summary,
-
-  holdings
-
-) => {
-
+const calculatePortfolioScore = (summary, holdings) => {
   let score = 50;
 
-  if (
+  if (summary.returnPercent >= 20) score += 20;
+  else if (summary.returnPercent >= 15) score += 15;
+  else if (summary.returnPercent >= 10) score += 10;
 
-    summary.returnPercent >= 20
+  if (holdings.length >= 8) score += 15;
+  else if (holdings.length >= 5) score += 10;
+  else if (holdings.length >= 3) score += 5;
 
-  )
+  if (summary.equityPercent >= 50 && summary.equityPercent <= 80) score += 10;
 
-    score += 20;
+  if (summary.currentValue > summary.totalInvested) score += 5;
 
-  else if (
-
-    summary.returnPercent >= 15
-
-  )
-
-    score += 15;
-
-  else if (
-
-    summary.returnPercent >= 10
-
-  )
-
-    score += 10;
-
-  if (
-
-    holdings.length >= 8
-
-  )
-
-    score += 15;
-
-  else if (
-
-    holdings.length >= 5
-
-  )
-
-    score += 10;
-
-  else if (
-
-    holdings.length >= 3
-
-  )
-
-    score += 5;
-
-  if (
-
-    summary.equityPercent >= 50 &&
-
-    summary.equityPercent <= 80
-
-  )
-
-    score += 10;
-
-  if (
-
-    summary.currentValue >
-
-    summary.totalInvested
-
-  )
-
-    score += 5;
-
-  return Math.min(
-
-    100,
-
-    Math.round(score)
-
-  );
-
+  return Math.min(100, Math.round(score));
 };
 
 // ======================================
 
-const calculateWealthMultiplier = (
-
-  invested,
-
-  current
-
-) => {
-
-  if (
-
-    invested <= 0
-
-  )
-
-    return 0;
-
-  return Number(
-
-    (
-
-      current /
-
-      invested
-
-    ).toFixed(2)
-
-  );
-
+const calculateWealthMultiplier = (invested, current) => {
+  if (invested <= 0) return 0;
+  return Number((current / invested).toFixed(2));
 };
 
 // ======================================
 
-const getReportPeriod = (
+const getReportPeriod = (transactions) => {
+  if (!transactions.length) return "ALL";
 
-  transactions
-
-) => {
-
-  if (
-
-    !transactions.length
-
-  )
-
-    return "ALL";
-
-  const first = new Date(
-
-    transactions[0].date
-
-  );
-
+  const first = new Date(transactions[0].date);
   const last = new Date();
+  const months = (last - first) / (1000 * 60 * 60 * 24 * 30);
 
-  const months =
-
-    (
-
-      last -
-
-      first
-
-    ) /
-
-    (1000 * 60 * 60 * 24 * 30);
-
-  if (
-
-    months <= 1
-
-  )
-
-    return "1 Month";
-
-  if (
-
-    months <= 6
-
-  )
-
-    return "6 Months";
-
-  if (
-
-    months <= 12
-
-  )
-
-    return "1 Year";
-
+  if (months <= 1) return "1 Month";
+  if (months <= 6) return "6 Months";
+  if (months <= 12) return "1 Year";
   return "All Time";
-
 };
 
 // ======================================
@@ -201,248 +59,132 @@ const getReportPeriod = (
 // ======================================
 
 export const generatePortfolioPDF = async ({
-
   logo,
-
   summary,
-
   holdings,
-
   transactions,
-
   history,
-
   fdValue,
-
   growthChartImage,
-
   allocationChartImage
-
 }) => {
-
   const doc = new jsPDF({
-
     orientation: "portrait",
-
     unit: "mm",
-
     format: "a4"
-
   });
 
   // ======================================
+  // Derived Metrics
+  // ======================================
 
-  const portfolioScore =
+  const portfolioScore = calculatePortfolioScore(summary, holdings);
 
-    calculatePortfolioScore(
+  const wealthMultiplier = calculateWealthMultiplier(
+    summary.totalInvested,
+    summary.currentValue
+  );
 
-      summary,
+  const reportPeriod = getReportPeriod(transactions);
 
-      holdings
+  // BUG FIX: previously summary.xirr / summary.cagr were used directly and
+  // simply defaulted to 0 if not already present on the summary object.
+  // Since nothing in this flow was ever computing them, the report always
+  // showed "XIRR 0.00%" / "CAGR 0.00%" regardless of actual performance.
+  // We now compute them here from the earliest transaction date whenever
+  // the caller hasn't already supplied a value.
+  const earliestTransactionDate =
+    transactions && transactions.length ? transactions[0].date : null;
 
-    );
+  const cagr =
+    summary.cagr ??
+    calculateCAGR(summary.totalInvested, summary.currentValue, earliestTransactionDate);
 
-  const wealthMultiplier =
+  const xirr =
+    summary.xirr ??
+    calculateXIRR(summary.totalInvested, summary.currentValue, earliestTransactionDate);
 
-    calculateWealthMultiplier(
+  const userName = localStorage.getItem("userName") || "Portfolio Owner";
 
-      summary.totalInvested,
-
-      summary.currentValue
-
-    );
-
-  const reportPeriod =
-
-    getReportPeriod(
-
-      transactions
-
-    );
-
-  const userName =
-
-    localStorage.getItem(
-
-      "userName"
-
-    ) ||
-
-    "Portfolio Owner";
-      // ======================================
+  // ======================================
   // Cover Page
   // ======================================
 
-  coverPage(
-
-    doc,
-
-    {
-
-      logo,
-
-      userName,
-
-      portfolioScore,
-
-      reportPeriod
-
-    }
-
-  );
+  coverPage(doc, {
+    logo,
+    userName,
+    portfolioScore,
+    reportPeriod
+  });
 
   // ======================================
   // Executive Summary
   // ======================================
 
-  summaryPage(
-
-    doc,
-
-    {
-
-      summary,
-
-      portfolioScore,
-
-      wealthMultiplier,
-
-      totalFunds:
-
-        holdings.length,
-
-      allocationChartImage
-
-    }
-
-  );
+  summaryPage(doc, {
+    summary,
+    portfolioScore,
+    wealthMultiplier,
+    totalFunds: holdings.length,
+    allocationChartImage
+  });
 
   // ======================================
   // Portfolio Growth
   // ======================================
 
-  growthPage(
-
-    doc,
-
-    {
-
-      summary,
-
-      holdings,
-
-      portfolioHistory:
-
-        history,
-
-      growthChartImage,
-
-      xirr:
-
-        summary.xirr || 0,
-
-      cagr:
-
-        summary.cagr || 0
-
-    }
-
-  );
+  growthPage(doc, {
+    summary,
+    holdings,
+    portfolioHistory: history,
+    growthChartImage,
+    xirr,
+    cagr
+  });
 
   // ======================================
   // Holdings
   // ======================================
+  // `summary` is now passed through so the "Current Portfolio Value" shown
+  // here always matches the Executive Summary page (see holdingsPage.js).
 
-  holdingsPage(
-
-    doc,
-
-    {
-
-      holdings
-
-    }
-
-  );
+  holdingsPage(doc, {
+    holdings,
+    summary
+  });
 
   // ======================================
   // Analysis
   // ======================================
 
-  analysisPage(
-
-    doc,
-
-    {
-
-      summary,
-
-      holdings,
-
-      fdValue,
-
-      portfolioScore
-
-    }
-
-  );
+  analysisPage(doc, {
+    summary,
+    holdings,
+    fdValue,
+    portfolioScore
+  });
 
   // ======================================
   // Insights
   // ======================================
 
-  insightsPage(
-
-    doc,
-
-    {
-
-      summary,
-
-      holdings,
-
-      fdValue
-
-    }
-
-  );
+  insightsPage(doc, {
+    summary,
+    holdings,
+    fdValue
+  });
 
   // ======================================
   // Footer
   // ======================================
 
-  footer(
-
-    doc
-
-  );
+  footer(doc);
 
   // ======================================
   // Save
   // ======================================
 
-  const today =
+  const today = new Date().toLocaleDateString("en-IN").replaceAll("/", "-");
 
-    new Date()
-
-      .toLocaleDateString(
-
-        "en-IN"
-
-      )
-
-      .replaceAll(
-
-        "/",
-
-        "-"
-
-      );
-
-  doc.save(
-
-    `Portfolio_Report_${today}.pdf`
-
-  );
-
+  doc.save(`Portfolio_Report_${today}.pdf`);
 };
