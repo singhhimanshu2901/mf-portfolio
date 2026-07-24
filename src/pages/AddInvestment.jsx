@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-
+import { getNavHistory } from "../services/navHistoryService";
 import { loadFunds, getNav, searchFunds } from "../services/navService";
 import { saveInvestment } from "../services/portfolioService";
 import { getCurrentUser } from "../services/authService";
@@ -82,49 +82,81 @@ export default function AddInvestment() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const user = getCurrentUser();
+  try {
+    const user = getCurrentUser();
 
-      if (!user) {
-        alert("Please Login First");
-        return;
-      }
-
-      if (!selectedFund) {
-        alert("Please Select Fund");
-        return;
-      }
-
-      const navData = await getNav(selectedFund.schemeCode);
-
-      const nav = navData.nav;
-
-      const units = Number(amount) / nav;
-
-      await saveInvestment({
-        uid: user.uid,
-        fundName: selectedFund.schemeName,
-        schemeCode: selectedFund.schemeCode,
-        category: selectedFund.category,
-        amount: Number(amount),
-        purchaseNav: nav,
-        units,
-        type,
-        date
-      });
-
-      alert("Investment Saved Successfully");
-
-      setSelectedFund(null);
-      setAmount("");
-      setDate("");
-    } catch (error) {
-      console.error(error);
-      alert("Error Saving Investment");
+    if (!user) {
+      alert("Please Login First");
+      return;
     }
-  };
+
+    if (!selectedFund) {
+      alert("Please Select Fund");
+      return;
+    }
+
+    if (!date) {
+      alert("Please Select Investment Date");
+      return;
+    }
+
+    // Fetch historical NAV
+    const history = await getNavHistory(selectedFund.schemeCode);
+
+    if (!history || !history.length) {
+      alert("Historical NAV not found.");
+      return;
+    }
+
+    const purchaseDate = new Date(date);
+
+    // Find nearest previous NAV
+    let selectedNav = null;
+
+    for (const item of history) {
+      const parts = item.date.split("-");
+      const navDate = new Date(
+        `${parts[2]}-${parts[1]}-${parts[0]}`
+      );
+
+      if (navDate <= purchaseDate) {
+        selectedNav = item;
+        break;
+      }
+    }
+
+    if (!selectedNav) {
+      selectedNav = history[history.length - 1];
+    }
+
+    const purchaseNav = Number(selectedNav.nav);
+
+    const units = Number(amount) / purchaseNav;
+
+    await saveInvestment({
+      uid: user.uid,
+      fundName: selectedFund.schemeName,
+      schemeCode: selectedFund.schemeCode,
+      category: selectedFund.category,
+      amount: Number(amount),
+      purchaseNav,
+      units,
+      type,
+      date
+    });
+
+    alert("Investment Saved Successfully");
+
+    setSelectedFund(null);
+    setAmount("");
+    setDate("");
+  } catch (error) {
+    console.error(error);
+    alert("Error Saving Investment");
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-8">
