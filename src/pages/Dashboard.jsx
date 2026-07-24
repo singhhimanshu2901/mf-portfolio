@@ -174,13 +174,29 @@ export default function Dashboard() {
 
       setNiftyData(niftyChartData);
 
-      const latestNiftyValue = niftyChartData.length
-        ? niftyChartData[niftyChartData.length - 1].nifty
-        : invested;
+      // ==============================
+      // BUG FIX: "FD Value" could show less than the invested amount,
+      // which should be impossible for a real FD (positive interest rate
+      // always compounds upward from day one).
+      //
+      // Root cause: `fdAmount` above (the actual FD calculation, using the
+      // rate saved in Settings) was computed but never used. `setFdValue`
+      // and `setMfVsFd` were instead silently fed `latestNiftyValue` — a
+      // completely different number representing "what this money would
+      // be worth if invested in the NIFTY index instead". Since markets
+      // can fall, THAT number can legitimately dip below the invested
+      // amount — but it was mislabeled as "FD Value" on screen, which
+      // made it look like a broken/negative FD calculation.
+      //
+      // The NIFTY comparison itself isn't wrong — it just belongs only to
+      // the separate "Vs NIFTY" chart (niftyData), not to the FD stat
+      // cards. FD Value / MF vs FD now use the real `fdAmount`, which is
+      // driven by the interest rate saved in Settings and can only grow.
+      // ==============================
 
       setSummary(summaryData);
-      setFdValue(latestNiftyValue);
-      setMfVsFd(summaryData.currentValue - latestNiftyValue);
+      setFdValue(fdAmount);
+      setMfVsFd(summaryData.currentValue - fdAmount);
       setCagr(cagrValue);
       setXirr(xirrValue);
       setLoading(false);
