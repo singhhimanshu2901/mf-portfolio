@@ -7,8 +7,8 @@ import { holdingsPage } from "./holdingsPage";
 import { analysisPage } from "./analysisPage";
 import { insightsPage } from "./insightsPage";
 import { footer } from "./footer";
-import { calculateCAGR } from "../cagr";
-import { calculateXIRR } from "../xirr";
+import { calculateWeightedCAGR } from "../cagr";
+import { calculateXIRRFromTransactions } from "../xirr";
 
 // ======================================
 // Helpers
@@ -87,22 +87,22 @@ export const generatePortfolioPDF = async ({
 
   const reportPeriod = getReportPeriod(transactions);
 
-  // BUG FIX: previously summary.xirr / summary.cagr were used directly and
-  // simply defaulted to 0 if not already present on the summary object.
-  // Since nothing in this flow was ever computing them, the report always
-  // showed "XIRR 0.00%" / "CAGR 0.00%" regardless of actual performance.
-  // We now compute them here from the earliest transaction date whenever
-  // the caller hasn't already supplied a value.
-  const earliestTransactionDate =
-    transactions && transactions.length ? transactions[0].date : null;
+  // BUG FIX (was always 0.00%): previously summary.xirr / summary.cagr
+  // were used directly and simply defaulted to 0 if not already present
+  // on the summary object — nothing in this flow ever computed them.
+  //
+  // ACCURACY FIX: rather than a single lump-sum formula (which assumes
+  // every rupee was invested on the earliest transaction date), we now
+  // compute:
+  //  - XIRR as the true money-weighted return across every individual
+  //    transaction's date/amount (calculateXIRRFromTransactions)
+  //  - CAGR using an amount-weighted average holding period
+  //    (calculateWeightedCAGR), which is far closer to reality for a
+  //    portfolio built via periodic SIPs than "years since the first
+  //    investment".
+  const cagr = calculateWeightedCAGR(transactions, summary.currentValue);
 
-  const cagr =
-    summary.cagr ??
-    calculateCAGR(summary.totalInvested, summary.currentValue, earliestTransactionDate);
-
-  const xirr =
-    summary.xirr ??
-    calculateXIRR(summary.totalInvested, summary.currentValue, earliestTransactionDate);
+  const xirr = calculateXIRRFromTransactions(transactions, summary.currentValue);
 
   const userName = localStorage.getItem("userName") || "Portfolio Owner";
 

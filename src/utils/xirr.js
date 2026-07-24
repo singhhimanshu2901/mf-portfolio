@@ -67,6 +67,7 @@ export const calculateXIRRFromCashflows = (cashflows) => {
   let rate = 0.1; // 10% initial guess
   const MAX_ITERATIONS = 100;
   const TOLERANCE = 1e-7;
+  let converged = false;
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const value = npv(rate);
@@ -78,13 +79,90 @@ export const calculateXIRRFromCashflows = (cashflows) => {
 
     if (Math.abs(nextRate - rate) < TOLERANCE) {
       rate = nextRate;
+      converged = true;
+      break;
+    }
+
+    // Guard against Newton-Raphson shooting off to a nonsensical rate
+    // (e.g. -100% or +infinity), which happens for some real-world cash
+    // flow patterns (a fund that lost most of its value very quickly).
+    if (!Number.isFinite(nextRate) || nextRate <= -0.9999) {
       break;
     }
 
     rate = nextRate;
   }
 
+  // Fallback: Newton-Raphson can fail to converge for portfolios that are
+  // down sharply or have unusual cash-flow timing. If it didn't converge,
+  // fall back to bisection on a wide, safe range — slower, but guaranteed
+  // to find a root if the NPV function actually changes sign there. This
+  // matters for accuracy: silently returning a wrong/unconverged number
+  // (or always defaulting to 0) is worse than doing a bit more work here.
+  if (!converged || !Number.isFinite(rate)) {
+    let low = -0.9999;
+    let high = 10; // +1000% annualized, generous upper bound
+    const lowVal = npv(low);
+    const highVal = npv(high);
+
+    if (Number.isFinite(lowVal) && Number.isFinite(highVal) && lowVal * highVal < 0) {
+      for (let i = 0; i < 200; i++) {
+        const mid = (low + high) / 2;
+        const midVal = npv(mid);
+
+        if (Math.abs(midVal) < TOLERANCE) {
+          rate = mid;
+          break;
+        }
+
+        if (lowVal * midVal < 0) {
+          high = mid;
+        } else {
+          low = mid;
+        }
+
+        rate = mid;
+      }
+    } else {
+      return 0;
+    }
+  }
+
   if (!Number.isFinite(rate)) return 0;
 
   return Number((rate * 100).toFixed(2));
+};
+
+// ======================================
+// Convenience wrapper: build cashflows from a transaction list
+// ======================================
+// transactions: [{ date, amount }] where `amount` is money you invested
+// (always positive in this app's data model). `currentValue` is the
+// fund/portfolio's value as of `asOfDate` (defaults to today).
+export const calculateXIRRFromTransactions = (
+  transactions,
+  currentValue,
+  asOfDate = new Date()
+) => {
+  if (!Array.isArray(transactions) || !transactions.length) {
+    return 0;
+  }
+
+  const cashflows = transactions
+    .filter((txn) => txn && txn.date && Number(txn.amount) > 0)
+    .map((txn) => ({
+      date: txn.date,
+      amount: -Math.abs(Number(txn.amount))
+    }));
+
+  if (!cashflows.length) {
+    return 0;
+  }
+
+  cashflows.push({
+    date: asOfDate instanceof Date ? asOfDate.toISOString().split("T")[0] : asOfDate,
+    amount: Number(currentValue) || 0
+  });
+
+  return calculateXIRRFromCashflows(cashflows);
 };
