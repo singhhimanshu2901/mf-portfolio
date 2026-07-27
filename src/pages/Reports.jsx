@@ -290,10 +290,10 @@ export default function Reports() {
 
   if (loading || !summary) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}>
         <div className="text-center">
           <div className="w-14 h-14 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-slate-300 mt-5 text-lg">
+          <p className="mt-5 text-lg" style={{ color: "var(--text-secondary)" }}>
             Loading Portfolio Reports...
           </p>
         </div>
@@ -306,14 +306,14 @@ export default function Reports() {
   // ==============================
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white">
+    <div className="flex min-h-screen" style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}>
       <Sidebar />
 
       <main className="flex-1 p-8 overflow-y-auto">
         {/* Header */}
         <div className="mb-10">
           <h1 className="text-4xl font-bold">Reports Center</h1>
-          <p className="text-slate-400 mt-2">
+          <p className="mt-2" style={{ color: "var(--text-secondary)" }}>
             Download beautiful professional portfolio reports.
           </p>
         </div>
@@ -321,10 +321,10 @@ export default function Reports() {
         {/* Cards */}
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Portfolio */}
-          <div className="rounded-2xl bg-slate-900 border border-slate-800 p-8">
+          <div className="rounded-2xl border p-8" style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}>
             <div className="text-5xl">📄</div>
             <h2 className="text-2xl font-bold mt-5">Portfolio Report</h2>
-            <p className="mt-4 text-slate-400 leading-7">
+            <p className="mt-4 leading-7" style={{ color: "var(--text-secondary)" }}>
               Complete PDF report including Executive Summary, Portfolio
               Growth, Asset Allocation, Holdings, MF vs FD Comparison,
               Portfolio Health & Smart Insights.
@@ -372,36 +372,36 @@ export default function Reports() {
             <button
               onClick={handleGeneratePDF}
               disabled={generating}
-              className="mt-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 py-4 font-bold transition"
+              className="mt-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 py-4 font-bold transition"
             >
               {generating ? "Generating Report..." : "Generate Portfolio PDF"}
             </button>
           </div>
 
           {/* Fund */}
-          <div className="rounded-2xl bg-slate-900 border border-slate-800 p-8">
+          <div className="rounded-2xl border p-8" style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}>
             <div className="text-5xl">📑</div>
             <h2 className="text-2xl font-bold mt-5">Individual Fund Report</h2>
-            <p className="text-slate-400 mt-4 leading-7">
+            <p className="mt-4 leading-7" style={{ color: "var(--text-secondary)" }}>
               Generate detailed reports for every mutual fund. Includes NAV
               history, investment analytics, XIRR, Wealth Multiplier,
               Transactions, Performance Statistics and Growth Analysis.
             </p>
 
             {holdings.length === 0 ? (
-              <div className="mt-10 rounded-xl bg-slate-800 p-8 text-center">
+              <div className="mt-10 rounded-xl p-8 text-center" style={{ background: "var(--bg-surface-2)" }}>
                 <div className="text-4xl">📭</div>
                 <h3 className="mt-4 text-xl font-bold">No Funds Yet</h3>
-                <p className="text-slate-400 mt-2">
+                <p className="mt-2" style={{ color: "var(--text-secondary)" }}>
                   Add an investment to generate a fund report.
                 </p>
               </div>
             ) : (
               <div className="mt-8">
-                <label className="text-slate-400 text-sm">Select Fund</label>
+                <label className="text-sm" style={{ color: "var(--text-secondary)" }}>Select Fund</label>
 
                 <select
-                  className="w-full p-3 mt-2 bg-slate-800 rounded"
+                  className="w-full p-3 mt-2 rounded" style={{ background: "var(--bg-surface-2)" }}
                   value={selectedSchemeCode}
                   onChange={(e) => setSelectedSchemeCode(e.target.value)}
                 >
@@ -415,7 +415,7 @@ export default function Reports() {
                 <button
                   onClick={handleGenerateFundPDF}
                   disabled={generatingFundReport}
-                  className="mt-6 w-full rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 py-4 font-bold transition"
+                  className="mt-6 w-full rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 py-4 font-bold transition"
                 >
                   {generatingFundReport
                     ? "Generating Report..."

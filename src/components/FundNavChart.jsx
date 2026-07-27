@@ -21,7 +21,7 @@ export default function FundNavChart({
 
     return (
 
-      <div className="h-[420px] flex items-center justify-center text-slate-400">
+      <div className="h-[420px] flex items-center justify-center text-[var(--text-secondary)]">
 
         No NAV History Available
 

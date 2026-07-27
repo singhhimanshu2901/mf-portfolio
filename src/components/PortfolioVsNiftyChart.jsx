@@ -36,7 +36,7 @@ const niftyReturn =
     ).toFixed(2);
 
   return (
-    <div className="bg-slate-900 rounded-xl p-6">
+    <div className="bg-[var(--bg-surface)] rounded-xl p-6">
 
       <h2 className="text-2xl font-bold mb-6">
         Portfolio vs NIFTY 50
@@ -62,7 +62,7 @@ const niftyReturn =
   {Number(portfolioReturn).toFixed(2)}%
 </p>
 
-            <p className="text-gray-300 mt-2 text-lg">
+            <p className="text-[var(--text-secondary)] mt-2 text-lg">
               ₹{
                 Number(
                   portfolioValue ||
@@ -91,7 +91,7 @@ const niftyReturn =
   {Number(niftyReturn).toFixed(2)}%
 </p>
 
-            <p className="text-gray-300 mt-2 text-lg">
+            <p className="text-[var(--text-secondary)] mt-2 text-lg">
               ₹{
                 Number(
                   niftyValue ||
@@ -108,7 +108,7 @@ const niftyReturn =
 
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
 
-          <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold shadow-lg">
+          <div className="w-14 h-14 rounded-full bg-[var(--bg-surface-2)] border border-[var(--border-color-strong)] flex items-center justify-center font-bold shadow-lg">
             VS
           </div>
 

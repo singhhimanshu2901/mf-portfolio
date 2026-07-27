@@ -1,10 +1,42 @@
 @import "tailwindcss";
 
-body{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  background:#0f172a;
-  color:white;
-  font-family:Inter,sans-serif;
+/* ======================================
+   Theme Variables
+   ======================================
+   Light values live on :root (the default). Dark values override them
+   under .dark (toggled on <html> by ThemeContext). Every page/component
+   uses these via Tailwind's arbitrary-value syntax, e.g.
+   bg-[var(--bg-app)], so the whole site follows a single toggle instead
+   of needing dark:/light: variants hand-added everywhere. */
+
+:root {
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-2: #f1f5f9;
+  --bg-surface-3: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+  --border-color-strong: #cbd5e1;
+}
+
+.dark {
+  --bg-app: #020617;
+  --bg-surface: #0f172a;
+  --bg-surface-2: #1e293b;
+  --bg-surface-3: #334155;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --border-color: #1e293b;
+  --border-color-strong: #334155;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: Inter, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }

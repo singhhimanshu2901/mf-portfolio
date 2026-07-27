@@ -40,6 +40,8 @@ export default function Dashboard() {
   const [cagr, setCagr] = useState(0);
   const [xirr, setXirr] = useState(0);
 
+  const [userName, setUserName] = useState("");
+
   const [bestFund, setBestFund] = useState(null);
   const [worstFund, setWorstFund] = useState(null);
   const [fundCount, setFundCount] = useState(0);
@@ -66,14 +68,12 @@ export default function Dashboard() {
 
       if (!user) return;
 
+      // Display Name for the "Welcome, {name}" header.
+      setUserName(user.displayName || user.email || "");
+
       // ==============================
-      // BUG FIX (same root cause as the Reports page): previously this
-      // called getPortfolioSummary(uid), which reads a Firestore cache
-      // doc that's only rewritten when a NEW investment is saved. Live
-      // NAV movement since then makes it drift from the holdings total
-      // computed below with fresh NAVs — so the Dashboard's top stat
-      // cards could silently disagree with the holdings list underneath
-      // them. Deriving summary from the same holdings array fixes that.
+      // Summary is derived directly from live holdings (not a Firestore
+      // cache) so it can never drift from the numbers shown elsewhere.
       // ==============================
 
       const transactions = await getInvestments(user.uid);
@@ -113,20 +113,8 @@ export default function Dashboard() {
         Number(localStorage.getItem("fdRate") || 7)
       );
 
-      // ==============================
-      // ACCURACY FIX: CAGR/XIRR previously used a single lump-sum formula
-      // fed with (totalInvested, currentValue, oldestTransactionDate).
-      // That treats every rupee as if it had been invested on day one,
-      // which significantly understates returns for anyone investing via
-      // SIP (most of the money is actually invested much more recently
-      // than the very first transaction). We now compute:
-      //  - XIRR as a true money-weighted return across every individual
-      //    transaction's date and amount (calculateXIRRFromTransactions)
-      //  - CAGR using an amount-weighted average holding period
-      //    (calculateWeightedCAGR), which is a much closer approximation
-      //    for SIP portfolios than a single start date.
-      // ==============================
-
+      // Accurate transaction-based CAGR/XIRR (money-weighted, not a
+      // single-date lump-sum approximation).
       const cagrValue = calculateWeightedCAGR(
         transactions,
         summaryData.currentValue
@@ -156,7 +144,6 @@ export default function Dashboard() {
         portfolioMap[item.date] = item.portfolio;
       });
 
-      // Final NIFTY vs Portfolio Data
       const niftyChartData = nifty.map((item) => {
         const niftyValue = invested * (item.close / firstClose);
 
@@ -174,26 +161,8 @@ export default function Dashboard() {
 
       setNiftyData(niftyChartData);
 
-      // ==============================
-      // BUG FIX: "FD Value" could show less than the invested amount,
-      // which should be impossible for a real FD (positive interest rate
-      // always compounds upward from day one).
-      //
-      // Root cause: `fdAmount` above (the actual FD calculation, using the
-      // rate saved in Settings) was computed but never used. `setFdValue`
-      // and `setMfVsFd` were instead silently fed `latestNiftyValue` — a
-      // completely different number representing "what this money would
-      // be worth if invested in the NIFTY index instead". Since markets
-      // can fall, THAT number can legitimately dip below the invested
-      // amount — but it was mislabeled as "FD Value" on screen, which
-      // made it look like a broken/negative FD calculation.
-      //
-      // The NIFTY comparison itself isn't wrong — it just belongs only to
-      // the separate "Vs NIFTY" chart (niftyData), not to the FD stat
-      // cards. FD Value / MF vs FD now use the real `fdAmount`, which is
-      // driven by the interest rate saved in Settings and can only grow.
-      // ==============================
-
+      // FD Value / MF vs FD use the real, Settings-rate-driven FD
+      // calculation — this can never fall below the invested amount.
       setSummary(summaryData);
       setFdValue(fdAmount);
       setMfVsFd(summaryData.currentValue - fdAmount);
@@ -208,26 +177,42 @@ export default function Dashboard() {
 
   if (loading || !summary) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        Loading Portfolio...
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
+      >
+        Fetching Portfolio...
       </div>
     );
   }
 
+  // Hybrid included as its own slice so allocation always adds up to
+  // 100% even when a Hybrid/balanced fund is held.
   const allocationData = [
     { name: "Equity", value: summary?.equityValue || 0 },
     { name: "Debt", value: summary?.debtValue || 0 },
-    { name: "Liquid", value: summary?.liquidValue || 0 }
-  ];
+    { name: "Liquid", value: summary?.liquidValue || 0 },
+    { name: "Hybrid", value: summary?.hybridValue || 0 }
+  ].filter((item) => item.value > 0);
 
-  const COLORS = ["#3B82F6", "#F59E0B", "#10B981"];
+  const COLORS = {
+    Equity: "#3B82F6",
+    Debt: "#F59E0B",
+    Liquid: "#10B981",
+    Hybrid: "#A855F7"
+  };
 
   return (
-    <div className="flex bg-slate-950 text-white min-h-screen">
+    <div
+      className="flex min-h-screen"
+      style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
+    >
       <Sidebar />
 
       <div className="flex-1 p-8">
-        <h1 className="text-4xl font-bold mb-8">Dashboard</h1>
+        <h1 className="text-4xl font-bold mb-8">
+          Welcome{userName ? `, ${userName}` : ""}
+        </h1>
 
         <div className="grid grid-cols-4 gap-5">
           <StatCard
@@ -281,7 +266,10 @@ export default function Dashboard() {
         </div>
 
         <div className="mt-10 grid grid-cols-2 gap-6">
-          <div className="bg-slate-900 rounded-xl p-6">
+          <div
+            className="rounded-xl p-6"
+            style={{ background: "var(--bg-surface)" }}
+          >
             <h2 className="text-2xl font-bold mb-5">Portfolio Allocation</h2>
 
             <div
@@ -304,7 +292,7 @@ export default function Dashboard() {
                     label={({ name }) => name}
                   >
                     {allocationData.map((entry, index) => (
-                      <Cell key={index} fill={COLORS[index]} />
+                      <Cell key={index} fill={COLORS[entry.name]} />
                     ))}
                   </Pie>
 
@@ -321,12 +309,18 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-slate-900 rounded-xl p-6">
+          <div
+            className="rounded-xl p-6"
+            style={{ background: "var(--bg-surface)" }}
+          >
             <h2 className="text-2xl font-bold mb-5">Allocation Breakdown</h2>
 
             <div className="space-y-5">
-              <div className="bg-slate-800 p-4 rounded-lg">
-                <p className="text-gray-400">Equity</p>
+              <div
+                className="p-4 rounded-lg"
+                style={{ background: "var(--bg-surface-2)" }}
+              >
+                <p style={{ color: "var(--text-secondary)" }}>Equity</p>
                 <p className="text-xl font-bold">
                   ₹
                   {summary.equityValue?.toLocaleString("en-IN", {
@@ -339,8 +333,11 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <div className="bg-slate-800 p-4 rounded-lg">
-                <p className="text-gray-400">Debt</p>
+              <div
+                className="p-4 rounded-lg"
+                style={{ background: "var(--bg-surface-2)" }}
+              >
+                <p style={{ color: "var(--text-secondary)" }}>Debt</p>
                 <p className="text-xl font-bold">
                   ₹
                   {summary.debtValue?.toLocaleString("en-IN", {
@@ -353,8 +350,11 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <div className="bg-slate-800 p-4 rounded-lg">
-                <p className="text-gray-400">Liquid</p>
+              <div
+                className="p-4 rounded-lg"
+                style={{ background: "var(--bg-surface-2)" }}
+              >
+                <p style={{ color: "var(--text-secondary)" }}>Liquid</p>
                 <p className="text-xl font-bold">
                   ₹
                   {summary.liquidValue?.toLocaleString("en-IN", {
@@ -366,6 +366,25 @@ export default function Dashboard() {
                   {summary.liquidPercent?.toFixed(2)}%
                 </p>
               </div>
+
+              {summary.hybridValue > 0 && (
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ background: "var(--bg-surface-2)" }}
+                >
+                  <p style={{ color: "var(--text-secondary)" }}>Hybrid</p>
+                  <p className="text-xl font-bold">
+                    ₹
+                    {summary.hybridValue?.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })}
+                  </p>
+                  <p className="text-purple-400">
+                    {summary.hybridPercent?.toFixed(2)}%
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -374,18 +393,22 @@ export default function Dashboard() {
           <div className="mb-6 flex gap-3">
             <button
               onClick={() => setChartMode("growth")}
-              className={`px-4 py-2 rounded-lg ${
-                chartMode === "growth" ? "bg-blue-600" : "bg-slate-800"
-              }`}
+              className="px-4 py-2 rounded-lg"
+              style={{
+                background:
+                  chartMode === "growth" ? "#2563eb" : "var(--bg-surface-2)"
+              }}
             >
               📈 My Portfolio
             </button>
 
             <button
               onClick={() => setChartMode("nifty")}
-              className={`px-4 py-2 rounded-lg ${
-                chartMode === "nifty" ? "bg-blue-600" : "bg-slate-800"
-              }`}
+              className="px-4 py-2 rounded-lg"
+              style={{
+                background:
+                  chartMode === "nifty" ? "#2563eb" : "var(--bg-surface-2)"
+              }}
             >
               📊 Vs NIFTY
             </button>
@@ -416,16 +439,23 @@ export default function Dashboard() {
           )}
 
           <div className="flex justify-center mb-4">
-            <div className="bg-slate-800 p-1 rounded-xl flex flex-wrap gap-1">
+            <div
+              className="p-1 rounded-xl flex flex-wrap gap-1"
+              style={{ background: "var(--bg-surface-2)" }}
+            >
               {["1D", "1W", "1M", "6M", "1Y", "ALL"].map((period) => (
                 <button
                   key={period}
                   onClick={() => setTimeframe(period)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    timeframe === period
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "text-gray-300 hover:bg-slate-700"
-                  }`}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                  style={{
+                    background:
+                      timeframe === period ? "#2563eb" : "transparent",
+                    color:
+                      timeframe === period
+                        ? "#ffffff"
+                        : "var(--text-secondary)"
+                  }}
                 >
                   {period}
                 </button>
@@ -434,33 +464,56 @@ export default function Dashboard() {
           </div>
 
           <div className="mt-10 grid grid-cols-2 gap-6">
-            <div className="bg-slate-900 rounded-xl p-6">
+            <div
+              className="rounded-xl p-6"
+              style={{ background: "var(--bg-surface)" }}
+            >
               <h2 className="text-2xl font-bold mb-6">Portfolio Insights</h2>
 
               <div className="space-y-4">
-                <div className="bg-slate-800 p-4 rounded-lg">
-                  <p className="text-gray-400">Total Funds</p>
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ background: "var(--bg-surface-2)" }}
+                >
+                  <p style={{ color: "var(--text-secondary)" }}>
+                    Total Funds
+                  </p>
                   <p className="text-3xl font-bold">{fundCount}</p>
                 </div>
 
-                <div className="bg-slate-800 p-4 rounded-lg">
-                  <p className="text-gray-400">Best Performer</p>
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ background: "var(--bg-surface-2)" }}
+                >
+                  <p style={{ color: "var(--text-secondary)" }}>
+                    Best Performer
+                  </p>
                   <p className="font-bold">{bestFund?.fundName}</p>
                   <p className="text-green-400">
                     {bestFund?.returnPercent?.toFixed(2)}%
                   </p>
                 </div>
 
-                <div className="bg-slate-800 p-4 rounded-lg">
-                  <p className="text-gray-400">Worst Performer</p>
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ background: "var(--bg-surface-2)" }}
+                >
+                  <p style={{ color: "var(--text-secondary)" }}>
+                    Worst Performer
+                  </p>
                   <p className="font-bold">{worstFund?.fundName}</p>
                   <p className="text-red-400">
                     {worstFund?.returnPercent?.toFixed(2)}%
                   </p>
                 </div>
 
-                <div className="bg-slate-800 p-4 rounded-lg">
-                  <p className="text-gray-400">Portfolio Health</p>
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ background: "var(--bg-surface-2)" }}
+                >
+                  <p style={{ color: "var(--text-secondary)" }}>
+                    Portfolio Health
+                  </p>
                   <p className="text-xl font-bold">
                     {fundCount >= 7
                       ? "Excellent"

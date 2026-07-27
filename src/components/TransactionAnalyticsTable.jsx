@@ -173,9 +173,9 @@ export default function TransactionAnalyticsTable({
       )}`;
         return (
 
-    <div className="bg-slate-900 rounded-2xl overflow-hidden">
+    <div className="bg-[var(--bg-surface)] rounded-2xl overflow-hidden">
 
-      <div className="p-6 border-b border-slate-800">
+      <div className="p-6 border-b border-[var(--border-color)]">
 
         <h2 className="text-2xl font-bold">
 
@@ -185,11 +185,11 @@ export default function TransactionAnalyticsTable({
 
       </div>
 
-      <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-4 p-6 border-b border-slate-800">
+      <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-4 p-6 border-b border-[var(--border-color)]">
 
         <div>
 
-          <p className="text-slate-400 text-sm">
+          <p className="text-[var(--text-secondary)] text-sm">
 
             Transactions
 
@@ -205,7 +205,7 @@ export default function TransactionAnalyticsTable({
 
         <div>
 
-          <p className="text-slate-400 text-sm">
+          <p className="text-[var(--text-secondary)] text-sm">
 
             Avg Buy NAV
 
@@ -223,7 +223,7 @@ export default function TransactionAnalyticsTable({
 
         <div>
 
-          <p className="text-slate-400 text-sm">
+          <p className="text-[var(--text-secondary)] text-sm">
 
             Highest Buy NAV
 
@@ -241,7 +241,7 @@ export default function TransactionAnalyticsTable({
 
         <div>
 
-          <p className="text-slate-400 text-sm">
+          <p className="text-[var(--text-secondary)] text-sm">
 
             Lowest Buy NAV
 
@@ -263,7 +263,7 @@ export default function TransactionAnalyticsTable({
 
         <table className="w-full min-w-[1400px]">
 
-          <thead className="bg-slate-800">
+          <thead className="bg-[var(--bg-surface-2)]">
 
             <tr>
 
@@ -345,7 +345,7 @@ export default function TransactionAnalyticsTable({
 
                 key={row.id}
 
-                className="border-t border-slate-800 hover:bg-slate-800/50"
+                className="border-t border-[var(--border-color)] hover:bg-[var(--bg-surface-2)]"
 
               >
 

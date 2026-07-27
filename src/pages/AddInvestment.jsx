@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
-import { loadFunds, getNav, searchFunds } from "../services/navService";
+import { loadFunds, searchFunds } from "../services/navService";
+import { getNavOnDate } from "../services/navHistoryService";
 import { saveInvestment } from "../services/portfolioService";
 import { getCurrentUser } from "../services/authService";
 
@@ -15,6 +16,7 @@ export default function AddInvestment() {
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
   const [type, setType] = useState("SIP");
+  const [saving, setSaving] = useState(false);
 
   // Debounce handle for live search
   const searchTimeoutRef = useRef(null);
@@ -39,12 +41,10 @@ export default function AddInvestment() {
   };
 
   // ======================================
-  // FIX: fund search now queries the live mfapi.in database (the full,
-  // real AMFI universe of ~37,000+ schemes) instead of only matching
-  // against a small local funds.json file. This is debounced (350ms) so
-  // we don't fire a network request on every keystroke. If the live
-  // search fails for any reason (offline, mfapi.in down, etc.), we fall
-  // back to filtering the local funds.json list so search still works.
+  // Fund search hits the live mfapi.in database (the full, real AMFI
+  // universe of ~37,000+ schemes) instead of only matching against a
+  // small local funds.json file. Debounced (350ms). Falls back to the
+  // local funds.json list if the live search fails.
   // ======================================
 
   const handleFundSearch = (value) => {
@@ -64,7 +64,6 @@ export default function AddInvestment() {
       const liveResults = await searchFunds(value);
 
       if (liveResults === null) {
-        // Live search failed — fall back to local list.
         const results = funds.filter((fund) =>
           fund.schemeName.toLowerCase().includes(value.toLowerCase())
         );
@@ -98,10 +97,32 @@ export default function AddInvestment() {
         return;
       }
 
-      const navData = await getNav(selectedFund.schemeCode);
+      if (!date) {
+        alert("Please select an investment date");
+        return;
+      }
 
-      const nav = navData.nav;
+      setSaving(true);
 
+      // ======================================
+      // BUG FIX: previously always called getNav(schemeCode) here, which
+      // only ever returns TODAY's NAV — so backfilling an old investment
+      // silently recorded today's price as the purchase price, no matter
+      // what date was selected. We now look up the actual NAV as of the
+      // selected date (or the nearest earlier trading day) so cost basis,
+      // profit/loss, returns and XIRR are all calculated correctly.
+      // ======================================
+
+      const navOnDate = await getNavOnDate(selectedFund.schemeCode, date);
+
+      if (!navOnDate || !navOnDate.nav) {
+        alert(
+          "Could not find a NAV for this fund on the selected date. Please check the date and try again."
+        );
+        return;
+      }
+
+      const nav = navOnDate.nav;
       const units = Number(amount) / nav;
 
       await saveInvestment({
@@ -116,7 +137,9 @@ export default function AddInvestment() {
         date
       });
 
-      alert("Investment Saved Successfully");
+      alert(
+        `Investment Saved Successfully (NAV used: Rs. ${nav.toFixed(4)} as of ${navOnDate.date})`
+      );
 
       setSelectedFund(null);
       setAmount("");
@@ -124,11 +147,16 @@ export default function AddInvestment() {
     } catch (error) {
       console.error(error);
       alert("Error Saving Investment");
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white">
+    <div
+      className="flex min-h-screen"
+      style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}
+    >
       <Sidebar />
 
       <main className="flex-1 p-8">
@@ -136,13 +164,15 @@ export default function AddInvestment() {
 
         <form
           onSubmit={handleSubmit}
-          className="max-w-xl bg-slate-900 p-6 rounded-xl"
+          className="max-w-xl p-6 rounded-xl"
+          style={{ background: "var(--bg-surface)" }}
         >
           <div className="mb-4">
             <label>Investment Type</label>
 
             <select
-              className="w-full p-3 mt-2 bg-slate-800 rounded"
+              className="w-full p-3 mt-2 rounded"
+              style={{ background: "var(--bg-surface-2)" }}
               value={type}
               onChange={(e) => setType(e.target.value)}
             >
@@ -156,27 +186,40 @@ export default function AddInvestment() {
             <label>Fund Search</label>
 
             <input
-              className="w-full p-3 mt-2 bg-slate-800 rounded"
+              className="w-full p-3 mt-2 rounded"
+              style={{ background: "var(--bg-surface-2)" }}
               placeholder="Search any mutual fund (e.g. HDFC, SBI, Parag Parikh...)"
               onChange={(e) => handleFundSearch(e.target.value)}
             />
 
             {searching && (
-              <div className="absolute z-50 w-full bg-slate-800 rounded mt-2 p-3 text-sm text-slate-400">
+              <div
+                className="absolute z-50 w-full rounded mt-2 p-3 text-sm"
+                style={{
+                  background: "var(--bg-surface-2)",
+                  color: "var(--text-secondary)"
+                }}
+              >
                 Searching...
               </div>
             )}
 
             {!searching && filteredFunds.length > 0 && (
-              <div className="absolute z-50 w-full bg-slate-800 rounded mt-2 max-h-64 overflow-y-auto">
+              <div
+                className="absolute z-50 w-full rounded mt-2 max-h-64 overflow-y-auto"
+                style={{ background: "var(--bg-surface-2)" }}
+              >
                 {filteredFunds.map((fund) => (
                   <div
                     key={fund.schemeCode}
-                    className="p-3 cursor-pointer hover:bg-slate-700"
+                    className="p-3 cursor-pointer hover:opacity-80"
                     onClick={() => handleFundSelect(fund)}
                   >
                     <div>{fund.schemeName}</div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div
+                      className="text-xs mt-1"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
                       {fund.category} · Scheme Code: {fund.schemeCode}
                     </div>
                   </div>
@@ -186,7 +229,10 @@ export default function AddInvestment() {
           </div>
 
           {selectedFund && (
-            <div className="mb-4 bg-slate-800 p-4 rounded">
+            <div
+              className="mb-4 p-4 rounded"
+              style={{ background: "var(--bg-surface-2)" }}
+            >
               <p>
                 <strong>Fund:</strong> {selectedFund.schemeName}
               </p>
@@ -204,7 +250,8 @@ export default function AddInvestment() {
 
             <input
               type="number"
-              className="w-full p-3 mt-2 bg-slate-800 rounded"
+              className="w-full p-3 mt-2 rounded"
+              style={{ background: "var(--bg-surface-2)" }}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
@@ -216,15 +263,23 @@ export default function AddInvestment() {
 
             <input
               type="date"
-              className="w-full p-3 mt-2 bg-slate-800 rounded"
+              className="w-full p-3 mt-2 rounded"
+              style={{ background: "var(--bg-surface-2)" }}
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
               required
             />
+            <p className="text-xs mt-2" style={{ color: "var(--text-secondary)" }}>
+              We'll use the fund's actual NAV as of this date (not today's NAV).
+            </p>
           </div>
 
-          <button className="bg-blue-600 px-6 py-3 rounded">
-            Save Investment
+          <button
+            disabled={saving}
+            className="bg-blue-600 px-6 py-3 rounded hover:bg-blue-700 disabled:opacity-60"
+          >
+            {saving ? "Saving..." : "Save Investment"}
           </button>
         </form>
       </main>

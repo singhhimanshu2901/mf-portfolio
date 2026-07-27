@@ -14,7 +14,7 @@ export default function PortfolioGrowthChart({
 
   return (
 
-    <div className="bg-slate-900 rounded-xl p-6">
+    <div className="bg-[var(--bg-surface)] rounded-xl p-6">
 
       <h2 className="text-2xl font-bold mb-5">
         My Portfolio
@@ -97,9 +97,9 @@ export default function PortfolioGrowthChart({
 
                   return (
 
-                    <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-xl">
+                    <div className="bg-[var(--bg-surface-2)] border border-[var(--border-color-strong)] rounded-lg p-4 shadow-xl">
 
-                      <p className="text-gray-300 mb-2">
+                      <p className="text-[var(--text-secondary)] mb-2">
 
                         {new Date(
                           item.date
@@ -118,7 +118,7 @@ export default function PortfolioGrowthChart({
                         Portfolio Value
                       </p>
 
-                      <p className="text-white text-lg font-bold">
+                      <p className="text-[var(--text-primary)] text-lg font-bold">
 
                         ₹{
                           Number(
@@ -133,13 +133,13 @@ export default function PortfolioGrowthChart({
 
                       </p>
 
-                      <div className="mt-3 border-t border-slate-700 pt-2">
+                      <div className="mt-3 border-t border-[var(--border-color-strong)] pt-2">
 
-                        <p className="text-gray-400 text-sm">
+                        <p className="text-[var(--text-secondary)] text-sm">
                           Invested
                         </p>
 
-                        <p className="text-white">
+                        <p className="text-[var(--text-primary)]">
 
                           ₹{
                             Number(
@@ -158,7 +158,7 @@ export default function PortfolioGrowthChart({
 
                       <div className="mt-2">
 
-                        <p className="text-gray-400 text-sm">
+                        <p className="text-[var(--text-secondary)] text-sm">
                           Return
                         </p>
 

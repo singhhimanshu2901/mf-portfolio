@@ -251,9 +251,11 @@ export const computeSummaryFromHoldings = (holdings) => {
       equityValue: 0,
       debtValue: 0,
       liquidValue: 0,
+      hybridValue: 0,
       equityPercent: 0,
       debtPercent: 0,
       liquidPercent: 0,
+      hybridPercent: 0,
       fundCount: 0,
       updatedAt: Date.now()
     };
@@ -290,6 +292,20 @@ export const computeSummaryFromHoldings = (holdings) => {
       .reduce((sum, item) => sum + item.currentValue, 0)
   );
 
+  // BUG FIX: funds found via the live mfapi.in search can be tagged
+  // "Hybrid" (balanced/multi-asset schemes) by inferFundCategory(), but
+  // this function used to only bucket equity/debt/liquid. A Hybrid
+  // holding's value was still counted in `currentValue` but excluded from
+  // every category bucket — so equityPercent + debtPercent + liquidPercent
+  // wouldn't add up to 100%, and the allocation pie chart would silently
+  // be missing a slice for it. Hybrid now gets its own bucket everywhere
+  // (Dashboard pie, PDF report, etc.).
+  const hybridValue = round(
+    holdings
+      .filter((item) => item.category?.toLowerCase().includes("hybrid"))
+      .reduce((sum, item) => sum + item.currentValue, 0)
+  );
+
   const equityPercent =
     currentValue > 0 ? round((equityValue / currentValue) * 100) : 0;
 
@@ -299,6 +315,9 @@ export const computeSummaryFromHoldings = (holdings) => {
   const liquidPercent =
     currentValue > 0 ? round((liquidValue / currentValue) * 100) : 0;
 
+  const hybridPercent =
+    currentValue > 0 ? round((hybridValue / currentValue) * 100) : 0;
+
   return {
     totalInvested,
     currentValue,
@@ -307,9 +326,11 @@ export const computeSummaryFromHoldings = (holdings) => {
     equityValue,
     debtValue,
     liquidValue,
+    hybridValue,
     equityPercent,
     debtPercent,
     liquidPercent,
+    hybridPercent,
     fundCount: holdings.length,
     updatedAt: Date.now()
   };

@@ -199,7 +199,7 @@ export default function FundDetails() {
 
     return (
 
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white text-xl">
+      <div className="min-h-screen bg-[var(--bg-app)] flex items-center justify-center text-[var(--text-primary)] text-xl">
 
         Loading Fund...
 
@@ -213,7 +213,7 @@ export default function FundDetails() {
 
     return (
 
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white text-xl">
+      <div className="min-h-screen bg-[var(--bg-app)] flex items-center justify-center text-[var(--text-primary)] text-xl">
 
         Fund not found.
 
@@ -224,7 +224,7 @@ export default function FundDetails() {
   }
     return (
 
-    <div className="flex min-h-screen bg-slate-950 text-white">
+    <div className="flex min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
 
       <Sidebar />
 
@@ -238,7 +238,7 @@ export default function FundDetails() {
 
           <div>
 
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--text-secondary)]">
 
               Mutual Fund Details
 
@@ -250,7 +250,7 @@ export default function FundDetails() {
 
             </h1>
 
-            <p className="text-slate-400 mt-2">
+            <p className="text-[var(--text-secondary)] mt-2">
 
               {holding.category}
 
@@ -291,7 +291,7 @@ export default function FundDetails() {
                   className={`px-5 py-2 rounded-lg transition-all duration-300 ${
                     timeframe === period
                       ? "bg-blue-600"
-                      : "bg-slate-800 hover:bg-slate-700"
+                      : "bg-[var(--bg-surface-2)] hover:bg-[var(--bg-surface-3)]"
                   }`}
 
                 >
@@ -326,7 +326,7 @@ export default function FundDetails() {
         {/* NAV History */}
         {/* ============================ */}
 
-        <div className="bg-slate-900 rounded-2xl p-6 mt-8">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6 mt-8">
 
           <div className="flex items-center justify-between mb-6">
 
@@ -336,7 +336,7 @@ export default function FundDetails() {
 
             </h2>
 
-            <div className="text-sm text-slate-400">
+            <div className="text-sm text-[var(--text-secondary)]">
 
               Performance Trend
 

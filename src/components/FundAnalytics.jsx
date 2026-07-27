@@ -179,9 +179,9 @@ export default function FundAnalytics({
 
       <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-5">
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Invested
 
@@ -199,9 +199,9 @@ export default function FundAnalytics({
 
         </div>
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Current Value
 
@@ -219,9 +219,9 @@ export default function FundAnalytics({
 
         </div>
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Current NAV
 
@@ -239,7 +239,7 @@ export default function FundAnalytics({
 
           </h2>
 
-          <p className="text-xs text-slate-500 mt-2">
+          <p className="text-xs text-[var(--text-secondary)] mt-2">
 
             {analytics.latestNavDate}
 
@@ -247,9 +247,9 @@ export default function FundAnalytics({
 
         </div>
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Profit / Loss
 
@@ -307,9 +307,9 @@ export default function FundAnalytics({
 
       <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-5">
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Units
 
@@ -327,9 +327,9 @@ export default function FundAnalytics({
 
         </div>
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Avg Buy NAV
 
@@ -349,9 +349,9 @@ export default function FundAnalytics({
 
         </div>
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Return %
 
@@ -380,9 +380,9 @@ export default function FundAnalytics({
 
         </div>
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             XIRR
 
@@ -409,9 +409,9 @@ export default function FundAnalytics({
 
       <div className="grid xl:grid-cols-4 md:grid-cols-2 gap-5">
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Investment Age
 
@@ -425,9 +425,9 @@ export default function FundAnalytics({
 
         </div>
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             First Investment
 
@@ -441,9 +441,9 @@ export default function FundAnalytics({
 
         </div>
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Last Investment
 
@@ -457,9 +457,9 @@ export default function FundAnalytics({
 
         </div>
 
-        <div className="bg-slate-900 rounded-2xl p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6">
 
-          <p className="text-slate-400">
+          <p className="text-[var(--text-secondary)]">
 
             Wealth Multiplier
 
@@ -475,7 +475,7 @@ export default function FundAnalytics({
 
           </h2>
 
-          <p className="text-sm text-slate-500 mt-2">
+          <p className="text-sm text-[var(--text-secondary)] mt-2">
 
             ₹1 → ₹
 

@@ -1,16 +1,12 @@
-export default function StatCard({
-  title,
-  value
-}) {
+export default function StatCard({ title, value }) {
   return (
-    <div className="bg-slate-800 p-5 rounded-xl">
-      <h3 className="text-gray-400">
-        {title}
-      </h3>
+    <div
+      className="p-5 rounded-xl"
+      style={{ background: "var(--bg-surface-2)" }}
+    >
+      <h3 style={{ color: "var(--text-secondary)" }}>{title}</h3>
 
-      <h2 className="text-2xl font-bold mt-2">
-        {value}
-      </h2>
+      <h2 className="text-2xl font-bold mt-2">{value}</h2>
     </div>
   );
 }
