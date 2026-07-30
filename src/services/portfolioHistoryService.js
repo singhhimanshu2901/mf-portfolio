@@ -19,13 +19,40 @@ export const getPortfolioHistory = async (uid, timeframe = "ALL") => {
   // -----------------------------
   // Load NAV History
   // -----------------------------
+  // ROOT-CAUSE FIX for the app hanging on "Fetching Portfolio...":
+  // if ANY single scheme's NAV history request failed or returned a
+  // non-array (e.g. the backend's error-shape response
+  // { error: "..." }, or a scheme code mfapi.in doesn't recognize), the
+  // very next step (`navHistoryMap[schemeCode].forEach(...)`) threw
+  // "forEach is not a function" and crashed the ENTIRE dashboard load —
+  // even though every other fund's data was perfectly fine. We now fetch
+  // each scheme's history independently (never let one rejection kill
+  // Promise.all for everyone) and skip/log any scheme whose result isn't
+  // a valid array instead of crashing.
 
   const navHistoryMap = {};
 
   await Promise.all(
     schemes.map(async (schemeCode) => {
-      const history = await getNavHistory(schemeCode);
-      navHistoryMap[schemeCode] = history;
+      try {
+        const history = await getNavHistory(schemeCode);
+
+        if (Array.isArray(history)) {
+          navHistoryMap[schemeCode] = history;
+        } else {
+          console.warn(
+            `NAV history for scheme ${schemeCode} was not an array (likely a backend/API error for this scheme). Skipping it in the growth chart.`,
+            history
+          );
+          navHistoryMap[schemeCode] = [];
+        }
+      } catch (err) {
+        console.warn(
+          `Failed to fetch NAV history for scheme ${schemeCode}. Skipping it in the growth chart.`,
+          err
+        );
+        navHistoryMap[schemeCode] = [];
+      }
     })
   );
 
@@ -39,7 +66,7 @@ export const getPortfolioHistory = async (uid, timeframe = "ALL") => {
   schemes.forEach((schemeCode) => {
     navIndex[schemeCode] = {};
 
-    navHistoryMap[schemeCode].forEach((item) => {
+    (navHistoryMap[schemeCode] || []).forEach((item) => {
       navIndex[schemeCode][item.date] = Number(item.nav);
       allNavDates.add(item.date);
     });
