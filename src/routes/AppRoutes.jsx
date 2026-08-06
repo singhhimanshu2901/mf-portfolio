@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 
+import Landing from "../pages/Landing";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
@@ -13,15 +14,13 @@ import ProtectedRoute from "../components/ProtectedRoute";
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-
       {/*
-        BUG FIX: these routes previously had no auth guard at all — an
-        unauthenticated visitor could navigate to them directly and each
-        page handled the "not logged in" case differently (usually just a
-        stuck spinner). ProtectedRoute now redirects to Login consistently.
+        CHANGE: "/" now shows the Landing/intro page instead of jumping
+        straight to Login. Login moved to its own "/login" route.
       */}
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       <Route
         path="/dashboard"
