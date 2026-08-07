@@ -70,17 +70,17 @@ export default function Settings() {
       <Sidebar />
 
       <div className="flex-1 p-8">
-        <h1 className="text-4xl font-bold mb-8">Settings</h1>
+        <h1 className="font-display text-4xl mb-8">Settings</h1>
 
         {/* ============================== */}
         {/* Appearance */}
         {/* ============================== */}
 
         <div
-          className="p-6 rounded-xl max-w-xl mb-6"
-          style={{ background: "var(--bg-surface)" }}
+          className="p-6 rounded-xl max-w-xl mb-6 border"
+          style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}
         >
-          <h2 className="text-2xl font-bold mb-6">Appearance</h2>
+          <h2 className="font-display text-2xl mb-6">Appearance</h2>
 
           <div className="flex items-center justify-between">
             <div>
@@ -94,7 +94,7 @@ export default function Settings() {
               onClick={toggleTheme}
               className="relative w-16 h-9 rounded-full transition-colors"
               style={{
-                background: theme === "dark" ? "#2563eb" : "var(--bg-surface-3)"
+                background: theme === "dark" ? "var(--accent)" : "var(--bg-surface-3)"
               }}
               aria-label="Toggle light/dark mode"
             >
@@ -115,10 +115,10 @@ export default function Settings() {
         {/* ============================== */}
 
         <div
-          className="p-6 rounded-xl max-w-xl mb-6"
-          style={{ background: "var(--bg-surface)" }}
+          className="p-6 rounded-xl max-w-xl mb-6 border"
+          style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}
         >
-          <h2 className="text-2xl font-bold mb-6">Profile</h2>
+          <h2 className="font-display text-2xl mb-6">Profile</h2>
 
           <div className="mb-6">
             <label className="block mb-2">Display Name</label>
@@ -128,7 +128,9 @@ export default function Settings() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your Name"
-              className="w-full p-3 rounded-lg border focus:outline-none focus:border-blue-500"
+              className="w-full p-3 rounded-lg border focus:outline-none transition-colors"
+              onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+              onBlur={(e) => (e.target.style.borderColor = "var(--border-color-strong)")}
               style={{
                 background: "var(--bg-surface-2)",
                 borderColor: "var(--border-color-strong)"
@@ -142,7 +144,8 @@ export default function Settings() {
           <button
             onClick={saveDisplayName}
             disabled={savingName}
-            className="bg-blue-600 px-6 py-3 rounded hover:bg-blue-700 disabled:opacity-60"
+            className="px-6 py-3 rounded font-medium transition-colors disabled:opacity-60"
+            style={{ background: "var(--accent)", color: "var(--accent-text)" }}
           >
             {savingName ? "Saving..." : "Save Display Name"}
           </button>
@@ -153,10 +156,10 @@ export default function Settings() {
         {/* ============================== */}
 
         <div
-          className="p-6 rounded-xl max-w-xl"
-          style={{ background: "var(--bg-surface)" }}
+          className="p-6 rounded-xl max-w-xl border"
+          style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}
         >
-          <h2 className="text-2xl font-bold mb-6">FD Comparison Settings</h2>
+          <h2 className="font-display text-2xl mb-6">FD Comparison Settings</h2>
 
           <div className="mb-6">
             <label className="block mb-2">FD Interest Rate (%)</label>
@@ -165,7 +168,9 @@ export default function Settings() {
               type="number"
               value={fdRate}
               onChange={(e) => setFdRate(e.target.value)}
-              className="w-full p-3 rounded-lg border focus:outline-none focus:border-blue-500"
+              className="w-full p-3 rounded-lg border focus:outline-none transition-colors"
+              onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+              onBlur={(e) => (e.target.style.borderColor = "var(--border-color-strong)")}
               style={{
                 background: "var(--bg-surface-2)",
                 borderColor: "var(--border-color-strong)"
@@ -173,7 +178,7 @@ export default function Settings() {
             />
             <p style={{ color: "var(--text-secondary)" }} className="mt-2">
               Current FD Comparison Rate:
-              <span className="text-blue-400 font-semibold ml-2">
+              <span className="font-mono font-semibold ml-2" style={{ color: "var(--accent)" }}>
                 {fdRate}%
               </span>
             </p>
@@ -181,7 +186,8 @@ export default function Settings() {
 
           <button
             onClick={saveSettings}
-            className="bg-blue-600 px-6 py-3 rounded hover:bg-blue-700"
+            className="px-6 py-3 rounded font-medium transition-colors"
+            style={{ background: "var(--accent)", color: "var(--accent-text)" }}
           >
             Save Settings
           </button>

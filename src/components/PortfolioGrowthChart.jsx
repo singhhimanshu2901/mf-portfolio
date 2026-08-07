@@ -16,7 +16,7 @@ export default function PortfolioGrowthChart({
 
     <div className="bg-[var(--bg-surface)] rounded-xl p-6">
 
-      <h2 className="text-2xl font-bold mb-5">
+      <h2 className="font-display text-2xl mb-5">
         My Portfolio
       </h2>
 
@@ -45,14 +45,14 @@ export default function PortfolioGrowthChart({
 
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#334155"
+              stroke="var(--border-color)"
             />
 
             <XAxis
               dataKey="date"
               minTickGap={40}
               tick={{
-                fill: "#CBD5E1",
+                fill: "var(--text-secondary)",
                 fontSize: 11
               }}
               tickFormatter={(value) => {
@@ -68,7 +68,7 @@ export default function PortfolioGrowthChart({
             <YAxis
               width={80}
               tick={{
-                fill: "#CBD5E1",
+                fill: "var(--text-secondary)",
                 fontSize: 11
               }}
               tickFormatter={(value) =>
@@ -114,7 +114,7 @@ export default function PortfolioGrowthChart({
 
                       </p>
 
-                      <p className="text-blue-400 text-sm">
+                      <p className="text-[var(--accent)] text-sm">
                         Portfolio Value
                       </p>
 
@@ -163,11 +163,13 @@ export default function PortfolioGrowthChart({
                         </p>
 
                         <p
-                          className={`font-semibold ${
-                            item.returnPercent >= 0
-                              ? "text-green-400"
-                              : "text-red-400"
-                          }`}
+                          className="font-semibold"
+                          style={{
+                            color:
+                              item.returnPercent >= 0
+                                ? "var(--gain)"
+                                : "var(--loss)"
+                          }}
                         >
 
                           {item.returnPercent}%
@@ -191,7 +193,7 @@ export default function PortfolioGrowthChart({
               type="monotone"
               dataKey="portfolio"
               connectNulls
-              stroke="#3B82F6"
+              stroke="var(--accent)"
               strokeWidth={3}
               dot={false}
               isAnimationActive={false}

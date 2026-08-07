@@ -145,9 +145,9 @@ export default function FundNavChart({
 
                   positive
 
-                    ? "#22c55e"
+                    ? "var(--gain)"
 
-                    : "#ef4444"
+                    : "var(--loss)"
 
                 }
 
@@ -163,9 +163,9 @@ export default function FundNavChart({
 
                   positive
 
-                    ? "#22c55e"
+                    ? "var(--gain)"
 
-                    : "#ef4444"
+                    : "var(--loss)"
 
                 }
 
@@ -181,7 +181,7 @@ export default function FundNavChart({
 
             strokeDasharray="3 3"
 
-            stroke="#1e293b"
+            stroke="var(--border-color)"
 
           />
 
@@ -191,7 +191,7 @@ export default function FundNavChart({
 
             tick={{
 
-              fill: "#94a3b8"
+              fill: "var(--text-secondary)"
 
             }}
 
@@ -203,7 +203,7 @@ export default function FundNavChart({
 
             tick={{
 
-              fill: "#94a3b8"
+              fill: "var(--text-secondary)"
 
             }}
 
@@ -235,9 +235,9 @@ export default function FundNavChart({
 
               positive
 
-                ? "#22c55e"
+                ? "var(--gain)"
 
-                : "#ef4444"
+                : "var(--loss)"
 
             }
 

@@ -196,10 +196,10 @@ export default function Dashboard() {
   ].filter((item) => item.value > 0);
 
   const COLORS = {
-    Equity: "#3B82F6",
-    Debt: "#F59E0B",
-    Liquid: "#10B981",
-    Hybrid: "#A855F7"
+    Equity: "#C9A24B",
+    Debt: "#7C93C7",
+    Liquid: "#7FD8B0",
+    Hybrid: "#B5836B"
   };
 
   return (
@@ -210,7 +210,7 @@ export default function Dashboard() {
       <Sidebar />
 
       <div className="flex-1 p-8">
-        <h1 className="text-4xl font-bold mb-8">
+        <h1 className="font-display text-4xl mb-8">
           Welcome{userName ? `, ${userName}` : ""}
         </h1>
 
@@ -270,7 +270,7 @@ export default function Dashboard() {
             className="rounded-xl p-6"
             style={{ background: "var(--bg-surface)" }}
           >
-            <h2 className="text-2xl font-bold mb-5">Portfolio Allocation</h2>
+            <h2 className="font-display text-2xl mb-5">Portfolio Allocation</h2>
 
             <div
               className="w-full"
@@ -313,7 +313,7 @@ export default function Dashboard() {
             className="rounded-xl p-6"
             style={{ background: "var(--bg-surface)" }}
           >
-            <h2 className="text-2xl font-bold mb-5">Allocation Breakdown</h2>
+            <h2 className="font-display text-2xl mb-5">Allocation Breakdown</h2>
 
             <div className="space-y-5">
               <div
@@ -321,14 +321,14 @@ export default function Dashboard() {
                 style={{ background: "var(--bg-surface-2)" }}
               >
                 <p style={{ color: "var(--text-secondary)" }}>Equity</p>
-                <p className="text-xl font-bold">
+                <p className="font-mono text-xl font-semibold">
                   ₹
                   {summary.equityValue?.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
                 </p>
-                <p className="text-green-400">
+                <p className="font-mono" style={{ color: COLORS.Equity }}>
                   {summary.equityPercent?.toFixed(2)}%
                 </p>
               </div>
@@ -338,14 +338,14 @@ export default function Dashboard() {
                 style={{ background: "var(--bg-surface-2)" }}
               >
                 <p style={{ color: "var(--text-secondary)" }}>Debt</p>
-                <p className="text-xl font-bold">
+                <p className="font-mono text-xl font-semibold">
                   ₹
                   {summary.debtValue?.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
                 </p>
-                <p className="text-yellow-400">
+                <p className="font-mono" style={{ color: COLORS.Debt }}>
                   {summary.debtPercent?.toFixed(2)}%
                 </p>
               </div>
@@ -355,14 +355,14 @@ export default function Dashboard() {
                 style={{ background: "var(--bg-surface-2)" }}
               >
                 <p style={{ color: "var(--text-secondary)" }}>Liquid</p>
-                <p className="text-xl font-bold">
+                <p className="font-mono text-xl font-semibold">
                   ₹
                   {summary.liquidValue?.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
                 </p>
-                <p className="text-cyan-400">
+                <p className="font-mono" style={{ color: COLORS.Liquid }}>
                   {summary.liquidPercent?.toFixed(2)}%
                 </p>
               </div>
@@ -373,14 +373,14 @@ export default function Dashboard() {
                   style={{ background: "var(--bg-surface-2)" }}
                 >
                   <p style={{ color: "var(--text-secondary)" }}>Hybrid</p>
-                  <p className="text-xl font-bold">
+                  <p className="font-mono text-xl font-semibold">
                     ₹
                     {summary.hybridValue?.toLocaleString("en-IN", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
                     })}
                   </p>
-                  <p className="text-purple-400">
+                  <p className="font-mono" style={{ color: COLORS.Hybrid }}>
                     {summary.hybridPercent?.toFixed(2)}%
                   </p>
                 </div>
@@ -393,10 +393,11 @@ export default function Dashboard() {
           <div className="mb-6 flex gap-3">
             <button
               onClick={() => setChartMode("growth")}
-              className="px-4 py-2 rounded-lg"
+              className="px-4 py-2 rounded-lg font-medium transition-colors"
               style={{
                 background:
-                  chartMode === "growth" ? "#2563eb" : "var(--bg-surface-2)"
+                  chartMode === "growth" ? "var(--accent)" : "var(--bg-surface-2)",
+                color: chartMode === "growth" ? "var(--accent-text)" : "var(--text-primary)"
               }}
             >
               📈 My Portfolio
@@ -404,10 +405,11 @@ export default function Dashboard() {
 
             <button
               onClick={() => setChartMode("nifty")}
-              className="px-4 py-2 rounded-lg"
+              className="px-4 py-2 rounded-lg font-medium transition-colors"
               style={{
                 background:
-                  chartMode === "nifty" ? "#2563eb" : "var(--bg-surface-2)"
+                  chartMode === "nifty" ? "var(--accent)" : "var(--bg-surface-2)",
+                color: chartMode === "nifty" ? "var(--accent-text)" : "var(--text-primary)"
               }}
             >
               📊 Vs NIFTY
@@ -450,10 +452,10 @@ export default function Dashboard() {
                   className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                   style={{
                     background:
-                      timeframe === period ? "#2563eb" : "transparent",
+                      timeframe === period ? "var(--accent)" : "transparent",
                     color:
                       timeframe === period
-                        ? "#ffffff"
+                        ? "var(--accent-text)"
                         : "var(--text-secondary)"
                   }}
                 >
@@ -468,7 +470,7 @@ export default function Dashboard() {
               className="rounded-xl p-6"
               style={{ background: "var(--bg-surface)" }}
             >
-              <h2 className="text-2xl font-bold mb-6">Portfolio Insights</h2>
+              <h2 className="font-display text-2xl mb-6">Portfolio Insights</h2>
 
               <div className="space-y-4">
                 <div
@@ -478,7 +480,7 @@ export default function Dashboard() {
                   <p style={{ color: "var(--text-secondary)" }}>
                     Total Funds
                   </p>
-                  <p className="text-3xl font-bold">{fundCount}</p>
+                  <p className="font-mono text-3xl font-semibold">{fundCount}</p>
                 </div>
 
                 <div
@@ -489,7 +491,7 @@ export default function Dashboard() {
                     Best Performer
                   </p>
                   <p className="font-bold">{bestFund?.fundName}</p>
-                  <p className="text-green-400">
+                  <p className="font-mono" style={{ color: "var(--gain)" }}>
                     {bestFund?.returnPercent?.toFixed(2)}%
                   </p>
                 </div>
@@ -502,7 +504,7 @@ export default function Dashboard() {
                     Worst Performer
                   </p>
                   <p className="font-bold">{worstFund?.fundName}</p>
-                  <p className="text-red-400">
+                  <p className="font-mono" style={{ color: "var(--loss)" }}>
                     {worstFund?.returnPercent?.toFixed(2)}%
                   </p>
                 </div>

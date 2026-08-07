@@ -187,7 +187,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
+          <h2 className="font-mono text-3xl font-semibold mt-2">
 
             {formatCurrency(
 
@@ -207,7 +207,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
+          <h2 className="font-mono text-3xl font-semibold mt-2">
 
             {formatCurrency(
 
@@ -227,7 +227,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-3xl font-bold text-cyan-400 mt-2">
+          <h2 className="font-mono text-3xl font-semibold mt-2" style={{ color: "var(--accent)" }}>
 
             ₹
 
@@ -257,14 +257,8 @@ export default function FundAnalytics({
 
           <h2
 
-            className={`text-3xl font-bold mt-2 ${
-              holding.profit >= 0
-
-                ? "text-green-400"
-
-                : "text-red-400"
-
-            }`}
+            className="font-mono text-3xl font-semibold mt-2"
+            style={{ color: holding.profit >= 0 ? "var(--gain)" : "var(--loss)" }}
 
           >
 
@@ -278,14 +272,8 @@ export default function FundAnalytics({
 
           <p
 
-            className={`mt-2 text-sm ${
-              holding.returnPercent >= 0
-
-                ? "text-green-400"
-
-                : "text-red-400"
-
-            }`}
+            className="mt-2 text-sm font-mono"
+            style={{ color: holding.returnPercent >= 0 ? "var(--gain)" : "var(--loss)" }}
 
           >
 
@@ -315,7 +303,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
+          <h2 className="font-mono text-3xl font-semibold mt-2">
 
             {holding.units.toFixed(
 
@@ -335,7 +323,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
+          <h2 className="font-mono text-3xl font-semibold mt-2">
 
             ₹
 
@@ -359,14 +347,8 @@ export default function FundAnalytics({
 
           <h2
 
-            className={`text-3xl font-bold mt-2 ${
-              holding.returnPercent >= 0
-
-                ? "text-green-400"
-
-                : "text-red-400"
-
-            }`}
+            className="font-mono text-3xl font-semibold mt-2"
+            style={{ color: holding.returnPercent >= 0 ? "var(--gain)" : "var(--loss)" }}
 
           >
 
@@ -388,7 +370,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
+          <h2 className="font-mono text-3xl font-semibold mt-2">
 
             {holding.xirr
               ? holding.xirr.toFixed(
@@ -417,7 +399,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-2xl font-bold mt-2">
+          <h2 className="font-mono text-2xl font-semibold mt-2">
 
             {analytics.investmentAge}
 
@@ -433,7 +415,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-xl font-semibold mt-2">
+          <h2 className="font-mono text-xl font-semibold mt-2">
 
             {analytics.firstInvestment}
 
@@ -449,7 +431,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-xl font-semibold mt-2">
+          <h2 className="font-mono text-xl font-semibold mt-2">
 
             {analytics.lastInvestment}
 
@@ -465,7 +447,7 @@ export default function FundAnalytics({
 
           </p>
 
-          <h2 className="text-3xl font-bold text-cyan-400 mt-2">
+          <h2 className="font-mono text-3xl font-semibold mt-2" style={{ color: "var(--accent)" }}>
 
             {analytics.wealthMultiplier.toFixed(
 

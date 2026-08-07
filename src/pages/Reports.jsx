@@ -292,7 +292,7 @@ export default function Reports() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-app)", color: "var(--text-primary)" }}>
         <div className="text-center">
-          <div className="w-14 h-14 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-14 h-14 border-4 border-t-transparent rounded-full animate-spin mx-auto" style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}></div>
           <p className="mt-5 text-lg" style={{ color: "var(--text-secondary)" }}>
             Loading Portfolio Reports...
           </p>
@@ -312,7 +312,7 @@ export default function Reports() {
       <main className="flex-1 p-8 overflow-y-auto">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-4xl font-bold">Reports Center</h1>
+          <h1 className="font-display text-4xl">Reports Center</h1>
           <p className="mt-2" style={{ color: "var(--text-secondary)" }}>
             Download beautiful professional portfolio reports.
           </p>
@@ -323,7 +323,7 @@ export default function Reports() {
           {/* Portfolio */}
           <div className="rounded-2xl border p-8" style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}>
             <div className="text-5xl">📄</div>
-            <h2 className="text-2xl font-bold mt-5">Portfolio Report</h2>
+            <h2 className="font-display text-2xl mt-5">Portfolio Report</h2>
             <p className="mt-4 leading-7" style={{ color: "var(--text-secondary)" }}>
               Complete PDF report including Executive Summary, Portfolio
               Growth, Asset Allocation, Holdings, MF vs FD Comparison,
@@ -333,11 +333,11 @@ export default function Reports() {
             <div className="space-y-4 mt-8">
               <div className="flex justify-between">
                 <span>Total Funds</span>
-                <span>{holdings.length}</span>
+                <span className="font-mono">{holdings.length}</span>
               </div>
               <div className="flex justify-between">
                 <span>Total Invested</span>
-                <span>
+                <span className="font-mono">
                   ₹
                   {summary.totalInvested.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
@@ -347,7 +347,7 @@ export default function Reports() {
               </div>
               <div className="flex justify-between">
                 <span>Current Value</span>
-                <span className="text-green-400">
+                <span className="font-mono" style={{ color: "var(--gain)" }}>
                   ₹
                   {summary.currentValue.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
@@ -358,11 +358,8 @@ export default function Reports() {
               <div className="flex justify-between">
                 <span>Total Return</span>
                 <span
-                  className={
-                    summary.returnPercent >= 0
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }
+                  className="font-mono"
+                  style={{ color: summary.returnPercent >= 0 ? "var(--gain)" : "var(--loss)" }}
                 >
                   {summary.returnPercent.toFixed(2)}%
                 </span>
@@ -372,7 +369,8 @@ export default function Reports() {
             <button
               onClick={handleGeneratePDF}
               disabled={generating}
-              className="mt-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 py-4 font-bold transition"
+              className="mt-10 w-full rounded-xl disabled:opacity-60 py-4 font-semibold transition-colors"
+              style={{ background: "var(--accent)", color: "var(--accent-text)" }}
             >
               {generating ? "Generating Report..." : "Generate Portfolio PDF"}
             </button>
@@ -381,7 +379,7 @@ export default function Reports() {
           {/* Fund */}
           <div className="rounded-2xl border p-8" style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}>
             <div className="text-5xl">📑</div>
-            <h2 className="text-2xl font-bold mt-5">Individual Fund Report</h2>
+            <h2 className="font-display text-2xl mt-5">Individual Fund Report</h2>
             <p className="mt-4 leading-7" style={{ color: "var(--text-secondary)" }}>
               Generate detailed reports for every mutual fund. Includes NAV
               history, investment analytics, XIRR, Wealth Multiplier,
@@ -391,7 +389,7 @@ export default function Reports() {
             {holdings.length === 0 ? (
               <div className="mt-10 rounded-xl p-8 text-center" style={{ background: "var(--bg-surface-2)" }}>
                 <div className="text-4xl">📭</div>
-                <h3 className="mt-4 text-xl font-bold">No Funds Yet</h3>
+                <h3 className="mt-4 font-display text-xl">No Funds Yet</h3>
                 <p className="mt-2" style={{ color: "var(--text-secondary)" }}>
                   Add an investment to generate a fund report.
                 </p>
@@ -415,7 +413,8 @@ export default function Reports() {
                 <button
                   onClick={handleGenerateFundPDF}
                   disabled={generatingFundReport}
-                  className="mt-6 w-full rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 py-4 font-bold transition"
+                  className="mt-6 w-full rounded-xl disabled:opacity-60 py-4 font-semibold transition-colors"
+                  style={{ background: "var(--accent)", color: "var(--accent-text)" }}
                 >
                   {generatingFundReport
                     ? "Generating Report..."

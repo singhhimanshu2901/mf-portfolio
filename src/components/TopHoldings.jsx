@@ -10,7 +10,7 @@ export default function TopHoldings({ holdings }) {
       className="rounded-xl p-6"
       style={{ background: "var(--bg-surface)" }}
     >
-      <h2 className="text-2xl font-bold mb-6">Top Holdings</h2>
+      <h2 className="font-display text-2xl mb-6">Top Holdings</h2>
 
       <div className="space-y-5">
         {topHoldings.map((fund) => {
@@ -39,8 +39,8 @@ export default function TopHoldings({ holdings }) {
                 style={{ background: "var(--bg-surface-3)" }}
               >
                 <div
-                  className="bg-blue-500 h-3 rounded-full"
-                  style={{ width: `${percent}%` }}
+                  className="h-3 rounded-full"
+                  style={{ width: `${percent}%`, background: "var(--accent)" }}
                 />
               </div>
             </div>

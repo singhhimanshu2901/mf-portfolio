@@ -6,7 +6,7 @@ export default function StatCard({ title, value }) {
     >
       <h3 style={{ color: "var(--text-secondary)" }}>{title}</h3>
 
-      <h2 className="text-2xl font-bold mt-2">{value}</h2>
+      <h2 className="font-mono text-2xl font-semibold mt-2">{value}</h2>
     </div>
   );
 }

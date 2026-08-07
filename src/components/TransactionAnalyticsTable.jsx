@@ -177,7 +177,7 @@ export default function TransactionAnalyticsTable({
 
       <div className="p-6 border-b border-[var(--border-color)]">
 
-        <h2 className="text-2xl font-bold">
+        <h2 className="font-display text-2xl">
 
           Transaction Analytics
 
@@ -195,7 +195,7 @@ export default function TransactionAnalyticsTable({
 
           </p>
 
-          <h3 className="text-2xl font-bold mt-2">
+          <h3 className="font-mono text-2xl font-semibold mt-2">
 
             {analytics.rows.length}
 
@@ -211,7 +211,7 @@ export default function TransactionAnalyticsTable({
 
           </p>
 
-          <h3 className="text-2xl font-bold mt-2">
+          <h3 className="font-mono text-2xl font-semibold mt-2">
 
             ₹
 
@@ -229,7 +229,7 @@ export default function TransactionAnalyticsTable({
 
           </p>
 
-          <h3 className="text-2xl font-bold mt-2 text-green-400">
+          <h3 className="font-mono text-2xl font-semibold mt-2" style={{ color: "var(--gain)" }}>
 
             ₹
 
@@ -247,7 +247,7 @@ export default function TransactionAnalyticsTable({
 
           </p>
 
-          <h3 className="text-2xl font-bold mt-2 text-red-400">
+          <h3 className="font-mono text-2xl font-semibold mt-2" style={{ color: "var(--loss)" }}>
 
             ₹
 
@@ -363,53 +363,50 @@ export default function TransactionAnalyticsTable({
 
                 <td className="px-5 py-4 text-right">
 
-                  {formatCurrency(row.amount)}
+                  <span className="font-mono">{formatCurrency(row.amount)}</span>
 
                 </td>
 
                 <td className="px-5 py-4 text-right">
 
-                  ₹{row.buyNav.toFixed(2)}
+                  <span className="font-mono">₹{row.buyNav.toFixed(2)}</span>
 
                 </td>
 
-                <td className="px-5 py-4 text-right text-cyan-400 font-semibold">
+                <td className="px-5 py-4 text-right font-mono font-semibold" style={{ color: "var(--accent)" }}>
 
-                  ₹{currentNav.toFixed(2)}
-
-                </td>
-
-                <td className="px-5 py-4 text-right">
-
-                  {row.units.toFixed(3)}
+                  <span className="font-mono">₹{currentNav.toFixed(2)}</span>
 
                 </td>
 
                 <td className="px-5 py-4 text-right">
 
-                  {row.runningUnits.toFixed(3)}
+                  <span className="font-mono">{row.units.toFixed(3)}</span>
 
                 </td>
 
                 <td className="px-5 py-4 text-right">
 
-                  {formatCurrency(row.runningCost)}
+                  <span className="font-mono">{row.runningUnits.toFixed(3)}</span>
 
                 </td>
 
                 <td className="px-5 py-4 text-right">
 
-                  {formatCurrency(row.currentValue)}
+                  <span className="font-mono">{formatCurrency(row.runningCost)}</span>
+
+                </td>
+
+                <td className="px-5 py-4 text-right">
+
+                  <span className="font-mono">{formatCurrency(row.currentValue)}</span>
 
                 </td>
 
                 <td
 
-                  className={`px-5 py-4 text-right font-semibold ${
-                    row.gain >= 0
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
+                  className="px-5 py-4 text-right font-semibold font-mono"
+                  style={{ color: row.gain >= 0 ? "var(--gain)" : "var(--loss)" }}
 
                 >
 
@@ -421,11 +418,11 @@ export default function TransactionAnalyticsTable({
 
                   <span
 
-                    className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
-                      row.gainPercent >= 0
-                        ? "bg-green-500/15 text-green-400"
-                        : "bg-red-500/15 text-red-400"
-                    }`}
+                    className="inline-flex rounded-full px-3 py-1 text-sm font-semibold font-mono"
+                    style={{
+                      background: row.gainPercent >= 0 ? "#2f8f5e26" : "#c1503d26",
+                      color: row.gainPercent >= 0 ? "var(--gain)" : "var(--loss)"
+                    }}
 
                   >
 

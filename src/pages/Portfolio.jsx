@@ -84,7 +84,7 @@ export default function Portfolio() {
       <main className="flex-1 p-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-4xl font-bold">Portfolio Holdings</h1>
+            <h1 className="font-display text-4xl">Portfolio Holdings</h1>
             <p className="mt-2" style={{ color: "var(--text-secondary)" }}>
               Track your mutual fund investments with live NAV.
             </p>
@@ -96,7 +96,9 @@ export default function Portfolio() {
               placeholder="Search fund..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border rounded-lg px-4 py-2 outline-none w-72 focus:border-blue-500"
+              className="border rounded-lg px-4 py-2 outline-none w-72 transition-colors"
+              onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+              onBlur={(e) => (e.target.style.borderColor = "var(--border-color-strong)")}
               style={inputStyle}
             />
 
@@ -129,7 +131,8 @@ export default function Portfolio() {
               onClick={() =>
                 setSortOrder(sortOrder === "desc" ? "asc" : "desc")
               }
-              className="bg-blue-600 hover:bg-blue-700 rounded-lg px-5 py-2"
+              className="rounded-lg px-5 py-2 font-medium transition-colors"
+              style={{ background: "var(--accent)", color: "var(--accent-text)" }}
             >
               {sortOrder === "desc" ? "↓ Desc" : "↑ Asc"}
             </button>
@@ -200,19 +203,19 @@ export default function Portfolio() {
                           </div>
                         </td>
 
-                        <td className="px-6 py-5 text-right">
+                        <td className="px-6 py-5 text-right font-mono">
                           {formatCurrency(item.invested)}
                         </td>
 
-                        <td className="px-6 py-5 text-right">
+                        <td className="px-6 py-5 text-right font-mono">
                           {item.units.toFixed(3)}
                         </td>
 
-                        <td className="px-6 py-5 text-right">
+                        <td className="px-6 py-5 text-right font-mono">
                           ₹{item.averageBuyNav?.toFixed(2)}
                         </td>
 
-                        <td className="px-6 py-5 text-right font-semibold text-cyan-400">
+                        <td className="px-6 py-5 text-right font-semibold font-mono" style={{ color: "var(--accent)" }}>
                           ₹{item.currentNav?.toFixed(2)}
                         </td>
 
@@ -223,27 +226,24 @@ export default function Portfolio() {
                           {item.navDate || "--"}
                         </td>
 
-                        <td className="px-6 py-5 text-right font-semibold">
+                        <td className="px-6 py-5 text-right font-semibold font-mono">
                           {formatCurrency(item.currentValue)}
                         </td>
 
                         <td
-                          className={`px-6 py-5 text-right font-semibold ${
-                            item.profit >= 0
-                              ? "text-green-400"
-                              : "text-red-400"
-                          }`}
+                          className="px-6 py-5 text-right font-semibold font-mono"
+                          style={{ color: item.profit >= 0 ? "var(--gain)" : "var(--loss)" }}
                         >
                           {formatCurrency(item.profit)}
                         </td>
 
                         <td className="px-6 py-5 text-center">
                           <span
-                            className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-sm font-semibold ${
-                              item.returnPercent >= 0
-                                ? "bg-green-500/15 text-green-400"
-                                : "bg-red-500/15 text-red-400"
-                            }`}
+                            className="inline-flex items-center justify-center rounded-full px-3 py-1 text-sm font-semibold font-mono"
+                            style={{
+                              background: item.returnPercent >= 0 ? "#2f8f5e26" : "#c1503d26",
+                              color: item.returnPercent >= 0 ? "var(--gain)" : "var(--loss)"
+                            }}
                           >
                             {item.returnPercent >= 0 ? "+" : ""}
                             {item.returnPercent.toFixed(2)}%
@@ -256,7 +256,7 @@ export default function Portfolio() {
                   <tr>
                     <td colSpan={9} className="py-20 text-center">
                       <div className="text-6xl">📂</div>
-                      <h2 className="mt-5 text-2xl font-bold">
+                      <h2 className="mt-5 font-display text-2xl">
                         No Holdings Found
                       </h2>
                       <p

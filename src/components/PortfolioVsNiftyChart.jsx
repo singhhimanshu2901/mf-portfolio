@@ -38,7 +38,7 @@ const niftyReturn =
   return (
     <div className="bg-[var(--bg-surface)] rounded-xl p-6">
 
-      <h2 className="text-2xl font-bold mb-6">
+      <h2 className="font-display text-2xl mb-6">
         Portfolio vs NIFTY 50
       </h2>
 
@@ -46,18 +46,20 @@ const niftyReturn =
 
         <div className="grid grid-cols-2 gap-6">
 
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-5">
+          <div
+            className="rounded-2xl p-5 border"
+            style={{ background: "var(--accent-soft)", borderColor: "var(--accent)" }}
+          >
 
-            <p className="text-blue-400 text-sm font-medium">
+            <p className="text-[var(--accent)] text-sm font-medium">
               My Portfolio
             </p>
 
             <p
-  className={`text-3xl font-bold mt-2 ${
-    Number(portfolioReturn) >= 0
-      ? "text-green-400"
-      : "text-red-400"
-  }`}
+  className="font-display text-3xl mt-2"
+  style={{
+    color: Number(portfolioReturn) >= 0 ? "var(--gain)" : "var(--loss)"
+  }}
 >
   {Number(portfolioReturn).toFixed(2)}%
 </p>
@@ -75,18 +77,20 @@ const niftyReturn =
 
           </div>
 
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-5">
+          <div
+            className="rounded-2xl p-5 border"
+            style={{ background: "#7C93C71a", borderColor: "#7C93C7" }}
+          >
 
-            <p className="text-orange-400 text-sm font-medium">
+            <p className="text-[#7C93C7] text-sm font-medium">
               NIFTY 50
             </p>
 
             <p
-  className={`text-3xl font-bold mt-2 ${
-    Number(niftyReturn) >= 0
-      ? "text-green-400"
-      : "text-red-400"
-  }`}
+  className="font-display text-3xl mt-2"
+  style={{
+    color: Number(niftyReturn) >= 0 ? "var(--gain)" : "var(--loss)"
+  }}
 >
   {Number(niftyReturn).toFixed(2)}%
 </p>
@@ -119,11 +123,12 @@ const niftyReturn =
       <div className="flex justify-center mb-8">
 
         <div
-          className={`px-5 py-2 rounded-full text-sm font-semibold ${
-            difference >= 0
-              ? "bg-green-500/10 text-green-400 border border-green-500/20"
-              : "bg-red-500/10 text-red-400 border border-red-500/20"
-          }`}
+          className="px-5 py-2 rounded-full text-sm font-semibold border"
+          style={{
+            background: difference >= 0 ? "#2f8f5e1a" : "#c1503d1a",
+            color: difference >= 0 ? "var(--gain)" : "var(--loss)",
+            borderColor: difference >= 0 ? "var(--gain)" : "var(--loss)"
+          }}
         >
 
           {difference >= 0
@@ -185,7 +190,7 @@ const niftyReturn =
               type="monotone"
               dataKey="portfolio"
               name="Portfolio"
-              stroke="#3B82F6"
+              stroke="var(--accent)"
               strokeWidth={3}
               dot={false}
               activeDot={{
@@ -197,7 +202,7 @@ const niftyReturn =
               type="monotone"
               dataKey="nifty"
               name="NIFTY 50"
-              stroke="#F59E0B"
+              stroke="#7C93C7"
               strokeWidth={3}
               dot={false}
               activeDot={{

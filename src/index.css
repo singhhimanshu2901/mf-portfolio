@@ -7,28 +7,50 @@
    under .dark (toggled on <html> by ThemeContext). Every page/component
    uses these via Tailwind's arbitrary-value syntax, e.g.
    bg-[var(--bg-app)], so the whole site follows a single toggle instead
-   of needing dark:/light: variants hand-added everywhere. */
+   of needing dark:/light: variants hand-added everywhere.
+
+   UI REFRESH: same variable names/structure as before (no component
+   needed to change its wiring), just repainted with the "ledger meets
+   moonlight" palette introduced on the Landing page — ink navy + brass
+   gold in dark mode, warm paper + navy in light mode — instead of the
+   generic slate palette, so the whole app now matches the intro/login
+   flow's identity. --accent replaces the old hardcoded blue-600 used
+   throughout for buttons, active states and chart lines. */
 
 :root {
-  --bg-app: #f8fafc;
+  --bg-app: #f6f3ea;
   --bg-surface: #ffffff;
-  --bg-surface-2: #f1f5f9;
-  --bg-surface-3: #e2e8f0;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --border-color: #e2e8f0;
-  --border-color-strong: #cbd5e1;
+  --bg-surface-2: #efe9d8;
+  --bg-surface-3: #e2d9bd;
+  --text-primary: #14192b;
+  --text-secondary: #5b6178;
+  --border-color: #e2dcc8;
+  --border-color-strong: #cfc6a8;
+
+  --accent: #a9822f;
+  --accent-hover: #8f6c22;
+  --accent-soft: #a9822f1a;
+  --accent-text: #ffffff;
+  --gain: #2f8f5e;
+  --loss: #c1503d;
 }
 
 .dark {
-  --bg-app: #020617;
-  --bg-surface: #0f172a;
-  --bg-surface-2: #1e293b;
-  --bg-surface-3: #334155;
-  --text-primary: #ffffff;
-  --text-secondary: #94a3b8;
-  --border-color: #1e293b;
-  --border-color-strong: #334155;
+  --bg-app: #0a0f1e;
+  --bg-surface: #121a30;
+  --bg-surface-2: #1a2340;
+  --bg-surface-3: #2a3559;
+  --text-primary: #f3efe4;
+  --text-secondary: #9aa3c0;
+  --border-color: #1c2440;
+  --border-color-strong: #2a3559;
+
+  --accent: #c9a24b;
+  --accent-hover: #e8ce8b;
+  --accent-soft: #c9a24b26;
+  --accent-text: #0a0f1e;
+  --gain: #7fd8b0;
+  --loss: #e2725b;
 }
 
 body {
@@ -37,6 +59,19 @@ body {
   box-sizing: border-box;
   background: var(--bg-app);
   color: var(--text-primary);
-  font-family: Inter, sans-serif;
+  font-family: "Inter", sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ======================================
+   Type utilities (used across Landing/Login/Register and now the rest
+   of the app for headings and numeric/data figures)
+   ====================================== */
+
+.font-display {
+  font-family: "Fraunces", serif;
+}
+
+.font-mono {
+  font-family: "IBM Plex Mono", monospace;
 }

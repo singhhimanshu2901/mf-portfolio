@@ -288,11 +288,11 @@ export default function FundDetails() {
 
                   }
 
-                  className={`px-5 py-2 rounded-lg transition-all duration-300 ${
-                    timeframe === period
-                      ? "bg-blue-600"
-                      : "bg-[var(--bg-surface-2)] hover:bg-[var(--bg-surface-3)]"
-                  }`}
+                  className="px-5 py-2 rounded-lg transition-all duration-300 font-medium"
+                  style={{
+                    background: timeframe === period ? "var(--accent)" : "var(--bg-surface-2)",
+                    color: timeframe === period ? "var(--accent-text)" : "var(--text-primary)"
+                  }}
 
                 >
 
@@ -330,7 +330,7 @@ export default function FundDetails() {
 
           <div className="flex items-center justify-between mb-6">
 
-            <h2 className="text-2xl font-bold">
+            <h2 className="font-display text-2xl">
 
               NAV History
 

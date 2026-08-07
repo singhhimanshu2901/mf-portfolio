@@ -160,12 +160,12 @@ export default function AddInvestment() {
       <Sidebar />
 
       <main className="flex-1 p-8">
-        <h1 className="text-4xl font-bold mb-8">Add Investment</h1>
+        <h1 className="font-display text-4xl mb-8">Add Investment</h1>
 
         <form
           onSubmit={handleSubmit}
-          className="max-w-xl p-6 rounded-xl"
-          style={{ background: "var(--bg-surface)" }}
+          className="max-w-xl p-6 rounded-xl border"
+          style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}
         >
           <div className="mb-4">
             <label>Investment Type</label>
@@ -277,7 +277,8 @@ export default function AddInvestment() {
 
           <button
             disabled={saving}
-            className="bg-blue-600 px-6 py-3 rounded hover:bg-blue-700 disabled:opacity-60"
+            className="px-6 py-3 rounded font-medium transition-colors disabled:opacity-60"
+            style={{ background: "var(--accent)", color: "var(--accent-text)" }}
           >
             {saving ? "Saving..." : "Save Investment"}
           </button>

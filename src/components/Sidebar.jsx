@@ -35,7 +35,7 @@ export default function Sidebar() {
         borderRight: "1px solid var(--border-color)"
       }}
     >
-      <h2 className="text-2xl font-bold mb-8">MF Portfolio</h2>
+      <h2 className="font-display text-2xl mb-8">MF Portfolio</h2>
 
       <div className="flex flex-col gap-4 flex-1">
         {links.map((link) => (
@@ -46,7 +46,7 @@ export default function Sidebar() {
             style={{
               color:
                 location.pathname === link.to
-                  ? "#3B82F6"
+                  ? "var(--accent)"
                   : "var(--text-secondary)",
               fontWeight: location.pathname === link.to ? 600 : 400
             }}
