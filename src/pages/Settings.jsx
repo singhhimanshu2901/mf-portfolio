@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
-import { useTheme } from "../context/ThemeContext";
 import {
   getCurrentUser,
   waitForAuth,
@@ -9,8 +8,6 @@ import {
 } from "../services/authService";
 
 export default function Settings() {
-  const { theme, toggleTheme } = useTheme();
-
   // ==============================
   // FD Rate (unchanged behavior)
   // ==============================
@@ -71,44 +68,6 @@ export default function Settings() {
 
       <div className="flex-1 p-8">
         <h1 className="font-display text-4xl mb-8">Settings</h1>
-
-        {/* ============================== */}
-        {/* Appearance */}
-        {/* ============================== */}
-
-        <div
-          className="p-6 rounded-xl max-w-xl mb-6 border"
-          style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}
-        >
-          <h2 className="font-display text-2xl mb-6">Appearance</h2>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Theme</p>
-              <p style={{ color: "var(--text-secondary)" }} className="mt-1">
-                Currently using {theme === "dark" ? "Dark" : "Light"} mode
-              </p>
-            </div>
-
-            <button
-              onClick={toggleTheme}
-              className="relative w-16 h-9 rounded-full transition-colors"
-              style={{
-                background: theme === "dark" ? "var(--accent)" : "var(--bg-surface-3)"
-              }}
-              aria-label="Toggle light/dark mode"
-            >
-              <span
-                className="absolute top-1 w-7 h-7 rounded-full bg-white shadow transition-transform flex items-center justify-center text-sm"
-                style={{
-                  transform: theme === "dark" ? "translateX(30px)" : "translateX(2px)"
-                }}
-              >
-                {theme === "dark" ? "🌙" : "☀️"}
-              </span>
-            </button>
-          </div>
-        </div>
 
         {/* ============================== */}
         {/* Display Name */}

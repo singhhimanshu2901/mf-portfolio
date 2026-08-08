@@ -1,41 +1,15 @@
 @import "tailwindcss";
 
 /* ======================================
-   Theme Variables
+   Theme Variables — Always Dark
    ======================================
-   Light values live on :root (the default). Dark values override them
-   under .dark (toggled on <html> by ThemeContext). Every page/component
-   uses these via Tailwind's arbitrary-value syntax, e.g.
-   bg-[var(--bg-app)], so the whole site follows a single toggle instead
-   of needing dark:/light: variants hand-added everywhere.
-
-   UI REFRESH: same variable names/structure as before (no component
-   needed to change its wiring), just repainted with the "ledger meets
-   moonlight" palette introduced on the Landing page — ink navy + brass
-   gold in dark mode, warm paper + navy in light mode — instead of the
-   generic slate palette, so the whole app now matches the intro/login
-   flow's identity. --accent replaces the old hardcoded blue-600 used
-   throughout for buttons, active states and chart lines. */
+   Per request: the whole app should always look exactly like the
+   Landing page (ink navy + brass gold), with no light mode. There is
+   now only ONE set of values (no :root vs .dark split) — every
+   page/component keeps using the same var(--bg-app) etc. references,
+   they just always resolve to the same colors now. */
 
 :root {
-  --bg-app: #f6f3ea;
-  --bg-surface: #ffffff;
-  --bg-surface-2: #efe9d8;
-  --bg-surface-3: #e2d9bd;
-  --text-primary: #14192b;
-  --text-secondary: #5b6178;
-  --border-color: #e2dcc8;
-  --border-color-strong: #cfc6a8;
-
-  --accent: #a9822f;
-  --accent-hover: #8f6c22;
-  --accent-soft: #a9822f1a;
-  --accent-text: #ffffff;
-  --gain: #2f8f5e;
-  --loss: #c1503d;
-}
-
-.dark {
   --bg-app: #0a0f1e;
   --bg-surface: #121a30;
   --bg-surface-2: #1a2340;
@@ -60,12 +34,11 @@ body {
   background: var(--bg-app);
   color: var(--text-primary);
   font-family: "Inter", sans-serif;
-  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* ======================================
-   Type utilities (used across Landing/Login/Register and now the rest
-   of the app for headings and numeric/data figures)
+   Type utilities (Landing, Login, Register, and now the rest of the
+   app for headings and numeric/data figures)
    ====================================== */
 
 .font-display {
